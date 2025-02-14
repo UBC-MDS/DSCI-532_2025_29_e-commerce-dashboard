@@ -10,7 +10,7 @@ For e-commerce clothing stores that have a wide variety of product SKUs, it coul
 
 ## 2. Description of Data
 
-We will be visualizing a dataset of approximately 13,000 e-commerce sales transactions with 11 selected columns related to sales performance, fulfillment methods, product details, and shipping locations. This dataset enables e-commerce store managers to analyze market trends, optimize inventory, and refine marketing strategies.
+We will be visualizing a dataset of 128,975 e-commerce sales transactions with 11 selected columns, though we will initially build our dashboard using a random 10% subset (~13,000 records) for development. The dataset contains sales transactions from Amazon India, covering a short period in 2022 ([E-Commerce Sales Dataset](https://www.kaggle.com/datasets/thedevastator/unlock-profits-with-e-commerce-sales-data)). It provides information on sales performance, fulfillment methods, product details, and shipping locations, enableing e-commerce store managers to analyze market trends, optimize inventory, and refine marketing strategies.
 
 The dataset consists of categorical variables (e.g., fulfillment method, order status, product category, shipping location) and numerical variables (e.g., quantity sold, revenue). These variables will help answer key questions such as:
 
