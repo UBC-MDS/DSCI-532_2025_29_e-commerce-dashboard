@@ -10,6 +10,30 @@ For e-commerce clothing stores that have a wide variety of product SKUs, it coul
 
 ## 2. Description of Data
 
+We will be visualizing a dataset of approximately 13,000 e-commerce sales transactions with 11 selected columns related to sales performance, fulfillment methods, product details, and shipping locations. This dataset enables e-commerce store managers to analyze market trends, optimize inventory, and refine marketing strategies.
+
+The dataset consists of categorical variables (e.g., fulfillment method, order status, product category, shipping location) and numerical variables (e.g., quantity sold, revenue). These variables will help answer key questions such as:
+
+- How do sales fluctuate over time? Tracking revenue trends and identifying seasonal effects.
+- Which fulfillment methods lead to more successful sales? Comparing Amazon Fulfilled vs. Merchant Fulfilled orders.
+- Where are the top-performing regions? Identifying demand based on shipping locations.
+- How do product characteristics impact sales? Analyzing category and size preferences.
+
+To enhance our analysis and visualizations, we will create the following new variables:
+
+1. "Is Promotion" (Boolean) – A derived indicator based on the `promotion-ids` column:
+
+    - `True` if the transaction has a promotion applied.
+    - `False` if no promotion is applied.
+    - This will help analyze how discounts and promotions affect sales performance.
+
+2. "Sales per Month" (Aggregated Numerical) – Total revenue and quantity sold aggregated by month:
+
+    - Helps visualize monthly sales trends to identify seasonal patterns and peak demand periods.
+
+By incorporating these derived variables, we can generate insights into sales patterns, the impact of promotions, and monthly revenue trends, enabling e-commerce store managers to make data-driven decisions.
+
+
 ## 3. Research Question and Usage Scenario
 
 Amit is an entrepreneur who runs an online clothing store in India. Through his virtual store, he sells clothing items to customers across the country. He wants to [explore] his sales data to [compare] how the volume of sales orders vary by region/state. He would like to [identify] the locations that contribute the most to his revenue and [pinpoint] the regions with lower sales. Amit also wants to [understand] the top products ordered in each of the regions.
