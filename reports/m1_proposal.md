@@ -45,7 +45,7 @@ Amit makes a guess that perhaps customers in these regions might be discouraged 
 ## 4. App Sketch and Description
 
 <p align="center">
-  <img src="../data/img/sketch.png" alt="E-Commerce Sales Dashboard Sketch" width="600">
+  <img src="img/sketch.png" alt="E-Commerce Sales Dashboard Sketch" width="600">
   <br>
     Sales Dashboard Sketch
 </p>
