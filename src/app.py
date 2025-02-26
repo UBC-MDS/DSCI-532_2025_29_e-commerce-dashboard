@@ -7,6 +7,7 @@ import zipfile
 
 # Initiatlize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
 
 # Unzip and import data
 with zipfile.ZipFile('data/raw/amazon_sample.zip', 'r') as z:
@@ -51,4 +52,4 @@ app.layout = dbc.Container([
 
 # Run the app/dashboard
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
