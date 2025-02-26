@@ -37,15 +37,97 @@ fig = px.choropleth(sales,
 fig.update_geos(fitbounds="locations", visible=False)
 fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
+# Components
+
+# Header / Title
+title = dbc.Row(html.H1("Sales Dashboard"))
+
+#Metrics
+metric_1 = dbc.Card(
+    dbc.CardBody(
+        [
+            html.H3("Metric 1", 
+                    className="card-title"
+                    ),
+            html.H1("$24,560", 
+                    className="card-text"
+                    ),
+            html.Small("+20% month over month",
+                       className="card-text text-muted"
+                       )
+        ]
+    ),
+    style={"width": "18rem"},
+)
+
+metric_2 = dbc.Card(
+    dbc.CardBody(
+        [
+            html.H3("Metric 1", 
+                    className="card-title"
+                    ),
+            html.H1("$24,560", 
+                    className="card-text"
+                    ),
+            html.Small("+20% month over month",
+                       className="card-text text-muted"
+                       )
+        ]
+    ),
+    style={"width": "18rem"},
+)
+
+metric_3 = dbc.Card(
+    dbc.CardBody(
+        [
+            html.H3("Metric 1", 
+                    className="card-title"
+                    ),
+            html.H1("$24,560", 
+                    className="card-text"
+                    ),
+            html.Small("+20% month over month",
+                       className="card-text text-muted"
+                       )
+        ]
+    ),
+    style={"width": "18rem"},
+)
+
+metrics = dbc.Row([
+    dbc.Col(metric_1),
+    dbc.Col(metric_2),
+    dbc.Col(metric_3),
+])
+
+# Filters
+
+filters = None # placeholder for filters
+
+# Charts
+chart1 = None # placeholder for chart 1
+chart2 = None # placeholder for chart 2
+
+
+# Visuals
+visuals = dbc.Row([
+    dbc.Col(html.Div("Space for Filters"), md=4),
+    dbc.Col([
+        dbc.Row(dcc.Graph(figure=fig)),
+        dbc.Row([
+            dbc.Col(html.Div("Chart 1 goes here")),
+            dbc.Col(html.Div("Chart 2 goes here")),
+            ]),
+        ]),
+])
+
 # Layout
 app.layout = dbc.Container([
-    html.H1('Sales Dashboard'),
-    html.Div(),
-    html.Label('Put key metrics here'),
-    html.Div(),
-    html.Label('Put some filters here'),
-    dcc.Graph(figure=fig)
+    title,
+    metrics,
+    visuals
 ])
+
 
 # Server side callbacks/reactivity
 # ...
