@@ -12,6 +12,7 @@ def import_data():
     df = df.iloc[:, :-1]  # Drop last column
     df.rename(columns={'ship-state' : 'state'}, inplace=True)
     df['state'] = df['state'].str.title()
+    df['state'].dropna(inplace=True)
     df['Date'] = pd.to_datetime(df['Date'])
 
     india = gpd.read_file('data/states_india.geojson')
@@ -131,10 +132,12 @@ sales = alt.Chart(df, width='container').mark_line().encode(
             x=alt.X('yearmonth(Date):T', title='Month'),
             y=alt.Y('sum(Amount):Q', title='Total Amount')
         )
-product = alt.Chart(df).mark_arc(innerRadius=50).encode(
-    theta="value",
-    color="Category:N",
-)
+
+product_sales = df.groupby('Category')['Amount'].sum().reset_index()
+product = alt.Chart(product_sales).mark_arc(innerRadius=50).encode(
+            theta="Amount:Q",
+            color=alt.Color("Category:N", legend=None)
+        )
 
 # Visuals
 visuals = dbc.Row([
@@ -143,7 +146,7 @@ visuals = dbc.Row([
         dbc.Row(dvc.Vega(id='map', spec=map.to_dict(format="vega"), signalsToObserve=['selected_states'])),
         dbc.Row([
             dbc.Col(dvc.Vega(id='sales', spec=sales.to_dict(format="vega"))),
-            dbc.Col(html.Div("Chart 2 goes here")),
+            dbc.Col(dvc.Vega(id='product', spec=product.to_dict(format="vega")))
             ]),
         ]),
 ])
@@ -158,21 +161,43 @@ app.layout = dbc.Container([
 # Server side callbacks/reactivity
 @callback(
     Output("sales", "spec"),
-    Input("map", "signalData")
+    Input("map", "signalData"),
+    prevent_initial_call=True
 )
-def create_chart(signal_data):
-    state = signal_data['selected_states']['state'][0]
-
-    # If no state selected, use the entire data set
-    if not state:
+def sales_chart(signal_data):
+    if not signal_data['selected_states']:
+        # If no state selected, use the entire data set
         selection = df
     else:
+        state = signal_data['selected_states']['state'][0]
         selection = df[df['state'] == state]
 
-    return alt.Chart(selection, width='container').mark_line().encode(
-            x=alt.X('yearmonth(Date):T', title='Month'),
-            y=alt.Y('sum(Amount):Q', title='Total Amount')
-        ).to_dict(format='vega')
+    sales = alt.Chart(selection, width='container').mark_line().encode(
+                x=alt.X('yearmonth(Date):T', title='Month'),
+                y=alt.Y('sum(Amount):Q', title='Total Amount')
+            ).to_dict(format='vega')
+
+    return sales
+
+@callback(
+    Output("product", "spec"),
+    Input("map", "signalData"),
+    prevent_initial_call=True
+)
+def product_chart(signal_data):
+    if not signal_data['selected_states']:
+        # If no state selected, use the entire data set
+        selection = df.groupby('Category')['Amount'].sum().reset_index()
+    else:
+        state = signal_data['selected_states']['state'][0]
+        selection = df[df['state'] == state].groupby('Category')['Amount'].sum().reset_index()
+    
+    product = alt.Chart(selection, width='container').mark_arc(innerRadius=50).encode(
+                theta="Amount",
+                color="Category:N",
+            ).to_dict(format='vega')
+
+    return product
 
 # Run the app/dashboard
 if __name__ == '__main__':
