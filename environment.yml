@@ -9,3 +9,6 @@ dependencies:
   - python=3.13.0
   - pandas=2.2.3
   - geopandas=1.0.1
+  - pip
+  - pip:
+      - dash-vega-components

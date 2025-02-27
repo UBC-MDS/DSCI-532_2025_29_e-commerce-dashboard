@@ -1,48 +1,58 @@
 from dash import Dash, html, dcc, Input, Output, callback
 import dash_bootstrap_components as dbc
+import dash_vega_components as dvc
 import pandas as pd
-import plotly.express as px
-import json
-import zipfile
+import altair as alt
+import geopandas as gpd
+
+alt.data_transformers.enable('vegafusion')
+
+def import_data():
+    df = pd.read_csv('data/raw/amazon_sample.zip')
+    df = df.iloc[:, :-1]  # Drop last column
+    df.rename(columns={'ship-state' : 'state'}, inplace=True)
+    df['state'] = df['state'].str.title()
+
+    india = gpd.read_file('data/states_india.geojson')
+    india.drop(labels=['cartodb_id', 'state_code'], inplace=True, axis=1)
+    india.rename(columns={'st_nm' : 'state'}, inplace=True)
+
+    state_mapping = {
+        'Dadra And Nagar': 'Dadara & Nagar Havelli',
+        'Delhi': 'NCT of Delhi',
+        'Arunachal Pradesh': 'Arunanchal Pradesh',
+        'New Delhi': 'NCT of Delhi',
+        'Andaman & Nicobar ': 'Andaman & Nicobar Island',
+        'Rj': 'Rajasthan'  # Assuming 'Rj' stands for Rajasthan
+    }
+
+    # Rename values in df
+    df['state'] = df['state'].replace(state_mapping)
+    df.drop(df[df['state'] == 'Ladakh'].index, inplace=True)
+    df.dropna(inplace=True)
+
+    # ship_states = set(df['ship-state'].unique())
+    # india_states = set(india['st_nm'].unique())
+    # missing_in_india = ship_states - india_states
+    # missing_in_ship = india_states - ship_states
+
+    # print("States in df['ship-state'] but not in india['st_nm']:", missing_in_india)
+    # print("States in india['st_nm'] but not in df['ship-state']:", missing_in_ship)
+
+    return df, india
 
 # Initiatlize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
-# Unzip and import data
-with zipfile.ZipFile('data/raw/amazon_sample.zip', 'r') as z:
-    with z.open('amazon_sample.csv') as f:
-        df = pd.read_csv(f)
-df = df.iloc[:, :-1] # Drop last column
-df['ship-state'] = df['ship-state'].str.title()
-
-# Pre-aggregate data
-sales = df.groupby('ship-state').agg('sum')['Amount'].reset_index()
-sales.rename(columns={'ship-state':'State'}, inplace=True)
-
-# Load map (need to replace this code to pull map data from naturalearthdata.com)
-with open('data/states_india.geojson') as f:
-    geojson = json.load(f)
-
-# Plot choropleth map
-fig = px.choropleth(sales, 
-                    geojson=geojson, 
-                    locations='State', 
-                    featureidkey="properties.st_nm",
-                    color='Amount',
-                    color_continuous_scale="GnBu",
-                    range_color=(100000, 1000000),
-                    labels={'Amount':'Revenue'}
-                   )
-fig.update_geos(fitbounds="locations", visible=False)
-fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+# Data
+df, india = import_data()
 
 # Components
-
 # Header / Title
 title = dbc.Row(html.H1("Sales Dashboard"))
 
-#Metrics
+# Metrics
 metric_1 = dbc.Card(
     dbc.CardBody(
         [
@@ -101,21 +111,29 @@ metrics = dbc.Row([
 ])
 
 # Filters
-
 filters = None # placeholder for filters
 
 # Charts
+map = (
+    alt.Chart(india).mark_geoshape().encode(
+    #   color=alt.Color('Amount:Q', aggregate='sum'),
+    # ).transform_lookup(
+    #     lookup="state",
+    #     from_=alt.LookupData(df, "state", ["Amount"])
+    ).add_params(
+        alt.selection_point(fields=["state"], name="selected_states")
+    )
+)
 chart1 = None # placeholder for chart 1
 chart2 = None # placeholder for chart 2
-
 
 # Visuals
 visuals = dbc.Row([
     dbc.Col(html.Div("Space for Filters"), md=4),
     dbc.Col([
-        dbc.Row(dcc.Graph(figure=fig)),
+        dbc.Row(dcc.Graph(figure=map)),
         dbc.Row([
-            dbc.Col(html.Div("Chart 1 goes here")),
+            dbc.Col(dvc.Vega(id='line', spec={})),
             dbc.Col(html.Div("Chart 2 goes here")),
             ]),
         ]),
@@ -128,9 +146,25 @@ app.layout = dbc.Container([
     visuals
 ])
 
-
 # Server side callbacks/reactivity
-# ...
+@callback(
+    Output("line", "spec"),
+    Input("map", "signalData")
+)
+def create_chart(signal_data):
+    state = signal_data['selected_states']['state'][0]
+
+    if not state:
+        # Show all data if no states are selected
+        return alt.Chart(df).mark_line().encode(
+            x='Date',
+            y='sum(Amount)'
+        ).to_dict(format='vega')
+    else:
+        return alt.Chart(df[df['state'] == state]).mark_line().encode(
+                x='Date',
+                y='sum(Amount)'
+        ).to_dict(format='vega')
 
 # Run the app/dashboard
 if __name__ == '__main__':
