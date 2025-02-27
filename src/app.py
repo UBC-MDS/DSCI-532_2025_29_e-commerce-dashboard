@@ -32,13 +32,13 @@ def import_data():
     df.drop(df[df['state'] == 'Ladakh'].index, inplace=True)
     df.dropna(inplace=True)
 
-    # ship_states = set(df['ship-state'].unique())
-    # india_states = set(india['st_nm'].unique())
+    # ship_states = set(df['state'].unique())
+    # india_states = set(india['state'].unique())
     # missing_in_india = ship_states - india_states
     # missing_in_ship = india_states - ship_states
 
-    # print("States in df['ship-state'] but not in india['st_nm']:", missing_in_india)
-    # print("States in india['st_nm'] but not in df['ship-state']:", missing_in_ship)
+    # print("States in df but not in india:", missing_in_india)
+    # print("States in india but not in df:", missing_in_ship)
 
     return df, india
 
@@ -115,12 +115,14 @@ metrics = dbc.Row([
 filters = None # placeholder for filters
 
 # Charts
+state_sales = df.groupby('state')['Amount'].sum().reset_index()
 map = (
     alt.Chart(india, width='container').mark_geoshape().encode(
-    #   color=alt.Color('Amount:Q', aggregate='sum'),
-    # ).transform_lookup(
-    #     lookup="state",
-    #     from_=alt.LookupData(df, "state", ["Amount"])
+        color=alt.Color("Amount:Q", legend=None),
+        tooltip=['state:N', 'Amount:Q']
+    ).transform_lookup(
+        lookup="state",
+        from_=alt.LookupData(state_sales, "state", ["Amount"])
     ).add_params(
         alt.selection_point(fields=["state"], name="selected_states")
     )
@@ -129,7 +131,10 @@ sales = alt.Chart(df, width='container').mark_line().encode(
             x=alt.X('yearmonth(Date):T', title='Month'),
             y=alt.Y('sum(Amount):Q', title='Total Amount')
         )
-chart2 = None # placeholder for chart 2
+product = alt.Chart(df).mark_arc(innerRadius=50).encode(
+    theta="value",
+    color="Category:N",
+)
 
 # Visuals
 visuals = dbc.Row([
@@ -158,6 +163,7 @@ app.layout = dbc.Container([
 def create_chart(signal_data):
     state = signal_data['selected_states']['state'][0]
 
+    # If no state selected, use the entire data set
     if not state:
         selection = df
     else:
@@ -170,4 +176,4 @@ def create_chart(signal_data):
 
 # Run the app/dashboard
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
