@@ -12,6 +12,7 @@ def import_data():
     df = df.iloc[:, :-1]  # Drop last column
     df.rename(columns={'ship-state' : 'state'}, inplace=True)
     df['state'] = df['state'].str.title()
+    df['Date'] = pd.to_datetime(df['Date'])
 
     india = gpd.read_file('data/states_india.geojson')
     india.drop(labels=['cartodb_id', 'state_code'], inplace=True, axis=1)
@@ -115,7 +116,7 @@ filters = None # placeholder for filters
 
 # Charts
 map = (
-    alt.Chart(india).mark_geoshape().encode(
+    alt.Chart(india, width='container').mark_geoshape().encode(
     #   color=alt.Color('Amount:Q', aggregate='sum'),
     # ).transform_lookup(
     #     lookup="state",
@@ -124,16 +125,19 @@ map = (
         alt.selection_point(fields=["state"], name="selected_states")
     )
 )
-chart1 = None # placeholder for chart 1
+sales = alt.Chart(df, width='container').mark_line().encode(
+            x=alt.X('yearmonth(Date):T', title='Month'),
+            y=alt.Y('sum(Amount):Q', title='Total Amount')
+        )
 chart2 = None # placeholder for chart 2
 
 # Visuals
 visuals = dbc.Row([
     dbc.Col(html.Div("Space for Filters"), md=4),
     dbc.Col([
-        dbc.Row(dcc.Graph(figure=map)),
+        dbc.Row(dvc.Vega(id='map', spec=map.to_dict(format="vega"), signalsToObserve=['selected_states'])),
         dbc.Row([
-            dbc.Col(dvc.Vega(id='line', spec={})),
+            dbc.Col(dvc.Vega(id='sales', spec=sales.to_dict(format="vega"))),
             dbc.Col(html.Div("Chart 2 goes here")),
             ]),
         ]),
@@ -148,22 +152,20 @@ app.layout = dbc.Container([
 
 # Server side callbacks/reactivity
 @callback(
-    Output("line", "spec"),
+    Output("sales", "spec"),
     Input("map", "signalData")
 )
 def create_chart(signal_data):
     state = signal_data['selected_states']['state'][0]
 
     if not state:
-        # Show all data if no states are selected
-        return alt.Chart(df).mark_line().encode(
-            x='Date',
-            y='sum(Amount)'
-        ).to_dict(format='vega')
+        selection = df
     else:
-        return alt.Chart(df[df['state'] == state]).mark_line().encode(
-                x='Date',
-                y='sum(Amount)'
+        selection = df[df['state'] == state]
+
+    return alt.Chart(selection, width='container').mark_line().encode(
+            x=alt.X('yearmonth(Date):T', title='Month'),
+            y=alt.Y('sum(Amount):Q', title='Total Amount')
         ).to_dict(format='vega')
 
 # Run the app/dashboard
