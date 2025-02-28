@@ -6,7 +6,7 @@ import json
 
 # Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-#server = app.server
+server = app.server
 
 # function to format numeric values
 def format_large_num(value):
@@ -346,15 +346,12 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     #filtered_df = filtered_df[filtered_df["Fulfillment"] == fulfillment_filter]
 
     # Apply order status filter
-    print('Statuses:', selected_statuses)
     if selected_statuses:
         #filter_condition &= (df[df["Status"].isin(selected_statuses)])
         filter_statuses = [item for key, values in status_mapping.items() for item in values if key in selected_statuses ]
-        print('Filter Statuses:', filter_statuses)
         filter_condition += ' & (Status.isin(@filter_statuses))'
 
     # Store the filtered dataset as JSON (so teammates can use it)
-    print(filter_condition)
     filtered_df = df.query(filter_condition)    
     filtered_data_json = filtered_df.to_json(orient="split")
 
@@ -363,5 +360,5 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 
 # Run the app/dashboard
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
     
