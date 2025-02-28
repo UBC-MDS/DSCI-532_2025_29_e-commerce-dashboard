@@ -171,13 +171,7 @@ metrics = dbc.Row([
     dbc.Col(metric_3),
 ])
 
-# Filters
-# Extract all unique year-month values from the full dataset
-all_months = df["year_month"].unique()
-all_months_sorted = sorted(all_months)  # Ensure months are sorted
-
-# Create a mapping of months to index positions for the slider
-month_labels = {i: label for i, label in enumerate(all_months_sorted)}
+## Filters
 
 # Date (Month) Slider
 date_slider = dcc.Slider(
@@ -219,22 +213,12 @@ fulfillment_radio = dbc.Col([
     )
 ], width=3)
 
-# Checkbox for order status
+# Checkbox for order status, use grouped statuses
 status_checkbox = dbc.Col([
     dcc.Checklist(
         id="status-checkbox",
-        options=[
-            {"label": "Shipped", "value": "Shipped"},
-            {"label": "Delivered to Buyer", "value": "Shipped - Delivered to Buyer"},
-            {"label": "Picked Up", "value": "Shipped - Picked Up"},
-            {"label": "Out for Delivery", "value": "Shipped - Out for Delivery"},
-            {"label": "Cancelled", "value": "Cancelled"},
-            {"label": "Returned to Seller", "value": "Shipped - Returned to Seller"},
-            {"label": "Lost in Transit", "value": "Shipped - Lost in Transit"},
-            {"label": "Pending", "value": "Pending"},
-            {"label": "Shipping", "value": "Shipping"}
-        ],
-        value=["Shipped", "Shipped - Delivered to Buyer"],  # Default selection
+        options=[key for key, _ in status_mapping.items() ],
+        value=["Shipped"],  # Default selection
         inline=False  # Display vertically
     )
 ])
@@ -258,7 +242,7 @@ filters = dbc.Col([
             ),
             html.Hr(),
 
-            html.Label("Promotions Applied:", className="fw-bold mt-3", style={"color": "#34495e"}),
+            html.Label("Promotions Only:", className="fw-bold mt-3", style={"color": "#34495e"}),
             dbc.Switch(id="promotion-toggle", value=False, className="ms-2"),
             html.Hr(),
 
@@ -278,17 +262,20 @@ filters = dbc.Col([
             html.Label("Order Status:", className="fw-bold mt-3", style={"color": "#34495e"}),
             dbc.Checklist(
                 id="status-checkbox",
-                options=[{"label": x, "value": x} for x in df["Status"].unique()],
+                options=[key for key, _ in status_mapping.items() ],
                 inline=False,
                 className="mt-2"
-            )
+            ),
+            html.Br(),
+
+            html.Div(id = "filtered-data", style={"font-size": "8px", "font-style": "italic"})
         ]),
         className="shadow-sm rounded-3 p-4",
         style={"background-color": "#ffffff", "border": "1px solid #ddd", "width": "350px"}  # Reduced width
     )
 ], width="auto", className="d-flex justify-content-center")
 
-
+## end filter
 
 # Charts
 chart1 = None  # Placeholder for chart 1
@@ -343,29 +330,38 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     selected_date = month_labels.get(selected_index, None)
 
     if not selected_date:
-        return "Invalid date selection.", dash.no_update
+        return "No selection"
 
-    # Filter dataset based on selected month
-    filtered_df = df[df["year_month"] == selected_date]
+    # set end date to proper date
+    filter_end_date = pd.to_datetime(f'{selected_date}-01') + pd.DateOffset(months = 1)
+    filter_condition = '(Date < @filter_end_date)'
 
     # Apply promotion filter
     if promo_filter:
-        filtered_df = filtered_df[filtered_df["Promo"] > 0]  # Assuming "Promo" > 0 means applied
+        #filter_condition &= (df['is_promotion'])
+        filter_condition += ' & (is_promotion == True)'
 
+    # TODO: Update with Yajing's latest code
     # Apply fulfillment filter
-    filtered_df = filtered_df[filtered_df["Fulfillment"] == fulfillment_filter]
+    #filtered_df = filtered_df[filtered_df["Fulfillment"] == fulfillment_filter]
 
     # Apply order status filter
+    print('Statuses:', selected_statuses)
     if selected_statuses:
-        filtered_df = filtered_df[filtered_df["Status"].isin(selected_statuses)]
+        #filter_condition &= (df[df["Status"].isin(selected_statuses)])
+        filter_statuses = [item for key, values in status_mapping.items() for item in values if key in selected_statuses ]
+        print('Filter Statuses:', filter_statuses)
+        filter_condition += ' & (Status.isin(@filter_statuses))'
 
     # Store the filtered dataset as JSON (so teammates can use it)
+    print(filter_condition)
+    filtered_df = df.query(filter_condition)    
     filtered_data_json = filtered_df.to_json(orient="split")
 
-    return f"Filtered dataset contains {len(filtered_df)} records for {selected_date}.", filtered_data_json
+    return f"Showing {len(filtered_df):,.0f} records up to {selected_date}."#, filtered_data_json
 
 
 # Run the app/dashboard
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
     
