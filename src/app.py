@@ -3,51 +3,83 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import json
-import zipfile
 
 # Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-server = app.server
+#server = app.server
 
-# Unzip and import data
-with zipfile.ZipFile('data/raw/amazon_sample.zip', 'r') as z:
-    with z.open('amazon_sample.csv') as f:
-        df = pd.read_csv(f)
-df = df.iloc[:, :-1]  # Drop last column
+# function to format numeric values
+def format_large_num(value):
+    value = float('{:.3g}'.format(value))
+    magnitude = 0
+    while abs(value) >= 1000:
+        magnitude += 1
+        value /= 1000.0
+    return '{}{}'.format('{:f}'.format(value).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+
+# import data into dataframe
+df = pd.read_csv('data/raw/amazon_sample.zip')
+df = df.iloc[:, :-1]  # Drop last column (unused)
+
 df['ship-state'] = df['ship-state'].str.title()
 
-# Preprocessing data for dashboard
+## Preprocessing data for dashboard
+
+# Status mapping
+status_mapping = {
+    'Cancelled': ['Cancelled'],
+    'Pending': ['Pending', 'Pending - Waiting for Pick Up', 'Shipping'],
+    'Shipped': ['Shipped', 'Shipped - Damaged', 'Shipped - Delivered to Buyer',
+        'Shipped - Lost in Transit', 'Shipped - Out for Delivery',
+	    'Shipped - Picked Up', 'Shipped - Rejected by Buyer',
+	    'Shipped - Returned to Seller', 'Shipped - Returning to Seller'],
+}
+
 # Convert Date column to datetime
 df["Date"] = pd.to_datetime(df["Date"], format="%m-%d-%y", errors="coerce")
 
 # Extract year-month for aggregation
 df["year_month"] = df["Date"].dt.to_period("M").astype(str)
 
-# Filter only May and June 2022
-df_metric = df[df["year_month"].isin(["2022-05", "2022-06"])]
+# add flag for promotions
+df['is_promotion'] = df['promotion-ids'].notna() # will capture both NA and empty string
 
+# Extract all unique year-month values from the full dataset
+all_months = df["year_month"].unique()
+all_months_sorted = sorted(all_months)  # Ensure months are sorted
 
-# Compute Revenue Change (June vs May)
-revenue_mom = df_metric.groupby("year_month")["Amount"].sum()
+# Create a mapping of months to index positions for the slider
+month_labels = {i: label for i, label in enumerate(all_months_sorted)}
+
+# Filter only last 2 months
+df_month_values = (
+    df.groupby('year_month').agg({'Amount': 'sum', 'Qty': 'sum'})
+    .sort_index()
+)[-2:]
+# create list of the last 2 months and filter for metric
+last2_months = df_month_values.index.to_list()
+df_metric = df[df["year_month"].isin(last2_months)]
+
+# Compute Revenue Change over the last 2 months
+revenue_mom = df_month_values[['Amount']]
 
 # Ensure we have at least two months of data before computing the percentage change
 if len(revenue_mom) > 1:
-    revenue_mom_change = (revenue_mom.pct_change().iloc[-1]) * 100
+    revenue_mom_change = (revenue_mom.pct_change().iloc[-1].item())
 else:
     revenue_mom_change = 0  # Default to 0% change if not enough data
 
-
 # Compute Quantity Sold Change
-qty_mom = df_metric.groupby("year_month")["Qty"].sum()
+qty_mom = df_month_values[['Qty']]
 # Ensure we have at least two months of data before computing the percentage change
 if len(qty_mom) > 1:
-    quantity_mom_change = (qty_mom.pct_change().iloc[-1]) * 100
+    quantity_mom_change = (qty_mom.pct_change().iloc[-1].item())
 else:
     quantity_mom_change = 0  # Default to 0% change if not enough data
 
 
-total_revenue_june = revenue_mom["2022-06"]
-total_quantity_june = qty_mom["2022-06"]
+total_revenue_current = revenue_mom.iloc[-1].item()
+total_quantity_current = qty_mom.iloc[-1].item()
 
 # Compute Completed Orders Percentage
 completed_status = ["Shipped", "Shipped - Delivered to Buyer", "Shipped - Picked Up", "Shipped - Out for Delivery"]
