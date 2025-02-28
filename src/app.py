@@ -15,22 +15,20 @@ def import_data():
     df['state'].dropna(inplace=True)
     df['Date'] = pd.to_datetime(df['Date'])
 
-    india = gpd.read_file('data/states_india.geojson')
-    india.drop(labels=['cartodb_id', 'state_code'], inplace=True, axis=1)
-    india.rename(columns={'st_nm' : 'state'}, inplace=True)
+    url = 'https://naciscdn.org/naturalearth/50m/cultural/ne_50m_admin_1_states_provinces.zip'
+    india = gpd.read_file(url).query("iso_a2 == 'IN'")
+    india.rename(columns={'name' : 'state'}, inplace=True)
 
     state_mapping = {
-        'Dadra And Nagar': 'Dadara & Nagar Havelli',
-        'Delhi': 'NCT of Delhi',
-        'Arunachal Pradesh': 'Arunanchal Pradesh',
-        'New Delhi': 'NCT of Delhi',
-        'Andaman & Nicobar ': 'Andaman & Nicobar Island',
-        'Rj': 'Rajasthan'  # Assuming 'Rj' stands for Rajasthan
+        'Dadra And Nagar': 'Dadra and Nagar Haveli and Daman and Diu',
+        'New Delhi': 'Delhi',
+        'Andaman & Nicobar ': 'Andaman and Nicobar',
+        'Jammu & Kashmir ': 'Jammu and Kashmir',
+        'Rj': 'Rajasthan'
     }
 
     # Rename values in df
     df['state'] = df['state'].replace(state_mapping)
-    df.drop(df[df['state'] == 'Ladakh'].index, inplace=True)
     df.dropna(inplace=True)
 
     # ship_states = set(df['state'].unique())
@@ -52,7 +50,7 @@ df, india = import_data()
 
 # Components
 # Header / Title
-title = dbc.Row(html.H1("Sales Dashboard"))
+title = dbc.Row(html.H1("Sales Dashboard"), id='title')
 
 # Metrics
 metric_1 = dbc.Card(
@@ -109,47 +107,35 @@ metric_3 = dbc.Card(
 metrics = dbc.Row([
     dbc.Col(metric_1),
     dbc.Col(metric_2),
-    dbc.Col(metric_3),
-])
+    dbc.Col(metric_3)
+], id='metrics')
 
 # Filters
 filters = None # placeholder for filters
 
 # Charts
 state_sales = df.groupby('state')['Amount'].sum().reset_index()
-map = (
-    alt.Chart(india, width='container').mark_geoshape().encode(
-        color=alt.Color("Amount:Q", legend=None),
-        tooltip=['state:N', 'Amount:Q']
-    ).transform_lookup(
-        lookup="state",
-        from_=alt.LookupData(state_sales, "state", ["Amount"])
-    ).add_params(
-        alt.selection_point(fields=["state"], name="selected_states")
-    )
-)
-sales = alt.Chart(df, width='container').mark_line().encode(
-            x=alt.X('yearmonth(Date):T', title='Month'),
-            y=alt.Y('sum(Amount):Q', title='Total Amount')
-        )
-
-product_sales = df.groupby('Category')['Amount'].sum().reset_index()
-product = alt.Chart(product_sales).mark_arc(innerRadius=50).encode(
-            theta="Amount:Q",
-            color=alt.Color("Category:N", legend=None)
-        )
+map = alt.Chart(india, width='container').mark_geoshape(stroke='grey').encode(
+            color=alt.Color("Amount:Q", legend=None),
+            tooltip=['state:N', 'Amount:Q']
+        ).transform_lookup(
+            lookup="state",
+            from_=alt.LookupData(state_sales, "state", ["Amount"])
+        ).add_params(
+            alt.selection_point(fields=["state"], name="selected_states")
+        ).to_dict(format='vega')
 
 # Visuals
 visuals = dbc.Row([
-    dbc.Col(html.Div("Space for Filters"), md=4),
-    dbc.Col([
-        dbc.Row(dvc.Vega(id='map', spec=map.to_dict(format="vega"), signalsToObserve=['selected_states'])),
-        dbc.Row([
-            dbc.Col(dvc.Vega(id='sales', spec=sales.to_dict(format="vega"))),
-            dbc.Col(dvc.Vega(id='product', spec=product.to_dict(format="vega")))
-            ]),
-        ]),
-])
+            dbc.Col(html.Div("Space for Filters"), md=4, id='filters'),
+            dbc.Col([
+                dbc.Row(dvc.Vega(id='map', spec=map, signalsToObserve=['selected_states'])),
+                dbc.Row([
+                    dbc.Col(dvc.Vega(id='sales', spec={})),
+                    dbc.Col(dvc.Vega(id='product', spec={}))
+                ]),
+            ], 'charts'),
+        ], id='visuals')
 
 # Layout
 app.layout = dbc.Container([
@@ -162,10 +148,10 @@ app.layout = dbc.Container([
 @callback(
     Output("sales", "spec"),
     Input("map", "signalData"),
-    prevent_initial_call=True
+    # prevent_initial_call=True
 )
-def sales_chart(signal_data):
-    if not signal_data['selected_states']:
+def create_sales_chart(signal_data):
+    if not signal_data or not signal_data['selected_states']:
         # If no state selected, use the entire data set
         selection = df
     else:
@@ -182,10 +168,10 @@ def sales_chart(signal_data):
 @callback(
     Output("product", "spec"),
     Input("map", "signalData"),
-    prevent_initial_call=True
+    # prevent_initial_call=True
 )
-def product_chart(signal_data):
-    if not signal_data['selected_states']:
+def create_product_chart(signal_data):
+    if not signal_data or not signal_data['selected_states']:
         # If no state selected, use the entire data set
         selection = df.groupby('Category')['Amount'].sum().reset_index()
     else:
