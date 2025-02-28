@@ -40,7 +40,6 @@ def import_data():
     }
 
     df['state'] = df['state'].replace(state_mapping)
-    df.dropna(inplace=True)
 
     return df
 
@@ -62,7 +61,7 @@ def format_large_num(value):
     return '{}{}'.format('{:f}'.format(value).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
 
 # Initialize the app
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = Dash(__name__, external_stylesheets=[dbc.themes.LUMEN])
 server = app.server
 
 # Data
@@ -137,7 +136,6 @@ else:
 # Components
 # Header / Title
 title = dbc.Row(html.H1("Sales Dashboard"), id='title')
-
 
 # Metrics Cards using computed values
 metric_1 = dbc.Card(
@@ -234,7 +232,7 @@ status_checkbox = dbc.Col([
     )
 ])
 
-# Filters section (moving slider under "Space for Filters")
+# Filters section
 filters = dbc.Col([
     dbc.Card(
         dbc.CardBody([
@@ -300,7 +298,6 @@ map = alt.Chart(india, width='container').mark_geoshape(stroke='grey').encode(
 
 # Visuals
 visuals = dbc.Row([
-            dbc.Col(html.Div("Space for Filters"), md=4, id='filters'),
             dbc.Col([
                 dbc.Row(dvc.Vega(id='map', spec=map, signalsToObserve=['selected_states'])),
                 dbc.Row([
@@ -381,9 +378,6 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 )
 def create_sales_chart(query):
     selection = df.query(query)
-    print(query)
-    print(len(selection))
-
     sales = alt.Chart(selection, width='container').mark_line().encode(
                 x=alt.X('yearmonth(Date):T', title='Month'),
                 y=alt.Y('sum(Amount):Q', title='Total Amount')
