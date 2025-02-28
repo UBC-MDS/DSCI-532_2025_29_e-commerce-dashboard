@@ -45,7 +45,7 @@ def format_large_num(value):
         value /= 1000.0
     return '{}{}'.format('{:f}'.format(value).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
 
-# Initiatlize the app
+# Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
@@ -131,6 +131,7 @@ else:
 title = dbc.Row(html.H1("Sales Dashboard"), id='title')
 
 # Metrics Cards using computed values
+# Metrics Cards using computed values
 metric_1 = dbc.Card(
     dbc.CardBody(
         [
@@ -138,8 +139,13 @@ metric_1 = dbc.Card(
             html.H1(f"${format_large_num(total_revenue_current)}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
             html.Small(f"Compared to previous month: {revenue_mom_change:+.1%}",
                        className="card-text text-muted", style={"font-size": "14px"})
+            html.H3("Revenue", className="card-title", style={"font-size": "18px"}),
+            html.H1(f"${format_large_num(total_revenue_current)}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
+            html.Small(f"Compared to previous month: {revenue_mom_change:+.1%}",
+                       className="card-text text-muted", style={"font-size": "14px"})
         ]
     ),
+    style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"},
     style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"},
 )
 
@@ -150,8 +156,13 @@ metric_2 = dbc.Card(
             html.H1(f"{format_large_num(total_quantity_current)}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
             html.Small(f"Compared to previous month: {quantity_mom_change:+.1%}",
                        className="card-text text-muted", style={"font-size": "14px"})
+            html.H3("Quantity Sold", className="card-title", style={"font-size": "18px"}),
+            html.H1(f"{format_large_num(total_quantity_current)}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
+            html.Small(f"Compared to previous month: {quantity_mom_change:+.1%}",
+                       className="card-text text-muted", style={"font-size": "14px"})
         ]
     ),
+    style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"},
     style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"},
 )
 
@@ -162,8 +173,13 @@ metric_3 = dbc.Card(
             html.H1(f"{completion_rate_current:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
             html.Small(f"Compared to previous month: {completion_rate_mom_change:+.1f}%",
                        className="card-text text-muted", style={"font-size": "14px"})
+            html.H3("Completed Orders", className="card-title", style={"font-size": "18px"}),
+            html.H1(f"{completion_rate_current:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
+            html.Small(f"Compared to previous month: {completion_rate_mom_change:+.1f}%",
+                       className="card-text text-muted", style={"font-size": "14px"})
         ]
     ),
+    style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"},
     style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"},
 )
 metrics = dbc.Row([
@@ -172,7 +188,7 @@ metrics = dbc.Row([
     dbc.Col(metric_3)
 ], id='metrics')
 
-# Filters
+## Filters
 
 # Date (Month) Slider
 date_slider = dcc.Slider(
