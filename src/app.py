@@ -87,14 +87,18 @@ df.loc[:, "order_status_category"] = df["Status"].apply(lambda x: "Completed" if
 
 monthly_counts = df.groupby("year_month")["order_status_category"].count()
 completed_counts = df[df["order_status_category"] == "Completed"].groupby("year_month")["order_status_category"].count()
-completion_rate = (completed_counts / monthly_counts) * 100
-completion_rate_june = completion_rate["2022-06"]
-# Ensure May data exists before accessing
-if "2022-05" in completion_rate.index:
-    completion_rate_may = completion_rate["2022-05"]
-    completion_rate_mom_change = ((completion_rate_june - completion_rate_may) / completion_rate_may) * 100
+
+# get the completion rate, ensure values sorted by month
+completion_rate = (completed_counts / monthly_counts).sort_index() * 100
+
+
+completion_rate_current = completion_rate.iloc[-1]
+# Ensure 2+ months worth of data exists before accessing
+if len(completion_rate.index)>1:
+    completion_rate_prev = completion_rate.iloc[-2]
+    completion_rate_mom_change = ((completion_rate_current - completion_rate_prev) / completion_rate_prev) * 100
 else:
-    completion_rate_mom_change = 0  # Default to 0% if May data is missing
+    completion_rate_mom_change = 0  # Default to 0% if only one month of data
 
 
 
@@ -129,8 +133,8 @@ metric_1 = dbc.Card(
     dbc.CardBody(
         [
             html.H3("Revenue", className="card-title", style={"font-size": "18px"}),
-            html.H1(f"${total_revenue_june:,.2f}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
-            html.Small(f"Compared to previous month: {revenue_mom_change:+.1f}%",
+            html.H1(f"${format_large_num(total_revenue_current)}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
+            html.Small(f"Compared to previous month: {revenue_mom_change:+.1%}",
                        className="card-text text-muted", style={"font-size": "14px"})
         ]
     ),
@@ -141,8 +145,8 @@ metric_2 = dbc.Card(
     dbc.CardBody(
         [
             html.H3("Quantity Sold", className="card-title", style={"font-size": "18px"}),
-            html.H1(f"{total_quantity_june:,.0f}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
-            html.Small(f"Compared to previous month: {quantity_mom_change:+.1f}%",
+            html.H1(f"{format_large_num(total_quantity_current)}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
+            html.Small(f"Compared to previous month: {quantity_mom_change:+.1%}",
                        className="card-text text-muted", style={"font-size": "14px"})
         ]
     ),
@@ -153,7 +157,7 @@ metric_3 = dbc.Card(
     dbc.CardBody(
         [
             html.H3("Completed Orders", className="card-title", style={"font-size": "18px"}),
-            html.H1(f"{completion_rate_june:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
+            html.H1(f"{completion_rate_current:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
             html.Small(f"Compared to previous month: {completion_rate_mom_change:+.1f}%",
                        className="card-text text-muted", style={"font-size": "14px"})
         ]
