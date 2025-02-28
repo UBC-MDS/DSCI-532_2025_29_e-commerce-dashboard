@@ -175,13 +175,15 @@ fulfillment_radio = dbc.Col([
         id="fulfillment-radio",
         options=[
             {"label": " Amazon", "value": "Amazon"},
-            {"label": " Merchant", "value": "Merchant"}
+            {"label": " Merchant", "value": "Merchant"},
+            {"label": " Both", "value": "Both"}  # New option added
         ],
-        value="Amazon",  # Default selection
-        inline=False,  # Ensure vertical stacking
+        value="Both",  # Default selection to show all by default
+        inline=False,
         className="mt-2"
     )
 ], width=3)
+
 
 # Checkbox for order status
 status_checkbox = dbc.Col([
@@ -231,11 +233,12 @@ filters = dbc.Col([
                 id="fulfillment-radio",
                 options=[
                     {"label": " Amazon", "value": "Amazon"},
-                    {"label": " Merchant", "value": "Merchant"}
+                    {"label": " Merchant", "value": "Merchant"},
+                    {"label": " Both", "value": "Both"}
                 ],
-                value="Amazon",
-                inline=True,
-                className="mt-2"
+                value="Both",
+                inline=False,
+                className="d-flex flex-column mt-2"
             ),
             html.Hr(),
 
@@ -317,7 +320,10 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
         filtered_df = filtered_df[filtered_df["Promo"] > 0]  # Assuming "Promo" > 0 means applied
 
     # Apply fulfillment filter
-    filtered_df = filtered_df[filtered_df["Fulfillment"] == fulfillment_filter]
+    # Apply fulfillment filter
+    if fulfillment_filter != "Both":  # If not "Both", filter accordingly
+        filtered_df = filtered_df[filtered_df["Fulfillment"] == fulfillment_filter]
+
 
     # Apply order status filter
     if selected_statuses:
