@@ -205,13 +205,15 @@ fulfillment_radio = dbc.Col([
         id="fulfillment-radio",
         options=[
             {"label": " Amazon", "value": "Amazon"},
-            {"label": " Merchant", "value": "Merchant"}
+            {"label": " Merchant", "value": "Merchant"},
+            {"label": " Both", "value": "Both"}  # New option added
         ],
-        value="Amazon",  # Default selection
-        inline=False,  # Ensure vertical stacking
+        value="Both",  # Default selection to show all by default
+        inline=False,
         className="mt-2"
     )
 ], width=3)
+
 
 # Checkbox for order status, use grouped statuses
 status_checkbox = dbc.Col([
@@ -251,11 +253,12 @@ filters = dbc.Col([
                 id="fulfillment-radio",
                 options=[
                     {"label": " Amazon", "value": "Amazon"},
-                    {"label": " Merchant", "value": "Merchant"}
+                    {"label": " Merchant", "value": "Merchant"},
+                    {"label": " Both", "value": "Both"}
                 ],
-                value="Amazon",
-                inline=True,
-                className="mt-2"
+                value="Both",
+                inline=False,
+                className="d-flex flex-column mt-2"
             ),
             html.Hr(),
 
@@ -341,9 +344,10 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
         #filter_condition &= (df['is_promotion'])
         filter_condition += ' & (is_promotion == True)'
 
-    # TODO: Update with Yajing's latest code
-    # Apply fulfillment filter
-    #filtered_df = filtered_df[filtered_df["Fulfillment"] == fulfillment_filter]
+    # Apply fulfillment filter if selection is not Both
+    if fulfillment_filter != "Both":  # If not "Both", filter accordingly
+        filter_condition += ' & (Fulfilment == @fulfillment_filter)'
+
 
     # Apply order status filter
     if selected_statuses:
@@ -352,6 +356,7 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
         filter_condition += ' & (Status.isin(@filter_statuses))'
 
     # Store the filtered dataset as JSON (so teammates can use it)
+    # print(filter_condition)
     filtered_df = df.query(filter_condition)    
     filtered_data_json = filtered_df.to_json(orient="split")
 
@@ -360,5 +365,5 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 
 # Run the app/dashboard
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
     
