@@ -3,51 +3,83 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 import plotly.express as px
 import json
-import zipfile
 
 # Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
-# Unzip and import data
-with zipfile.ZipFile('data/raw/amazon_sample.zip', 'r') as z:
-    with z.open('amazon_sample.csv') as f:
-        df = pd.read_csv(f)
-df = df.iloc[:, :-1]  # Drop last column
+# function to format numeric values
+def format_large_num(value):
+    value = float('{:.3g}'.format(value))
+    magnitude = 0
+    while abs(value) >= 1000:
+        magnitude += 1
+        value /= 1000.0
+    return '{}{}'.format('{:f}'.format(value).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
+
+# import data into dataframe
+df = pd.read_csv('data/raw/amazon_sample.zip')
+df = df.iloc[:, :-1]  # Drop last column (unused)
+
 df['ship-state'] = df['ship-state'].str.title()
 
-# Preprocessing data for dashboard
+## Preprocessing data for dashboard
+
+# Status mapping
+status_mapping = {
+    'Cancelled': ['Cancelled'],
+    'Pending': ['Pending', 'Pending - Waiting for Pick Up', 'Shipping'],
+    'Shipped': ['Shipped', 'Shipped - Damaged', 'Shipped - Delivered to Buyer',
+        'Shipped - Lost in Transit', 'Shipped - Out for Delivery',
+	    'Shipped - Picked Up', 'Shipped - Rejected by Buyer',
+	    'Shipped - Returned to Seller', 'Shipped - Returning to Seller'],
+}
+
 # Convert Date column to datetime
 df["Date"] = pd.to_datetime(df["Date"], format="%m-%d-%y", errors="coerce")
 
 # Extract year-month for aggregation
 df["year_month"] = df["Date"].dt.to_period("M").astype(str)
 
-# Filter only May and June 2022
-df_metric = df[df["year_month"].isin(["2022-05", "2022-06"])]
+# add flag for promotions
+df['is_promotion'] = df['promotion-ids'].notna() # will capture both NA and empty string
 
+# Extract all unique year-month values from the full dataset
+all_months = df["year_month"].unique()
+all_months_sorted = sorted(all_months)  # Ensure months are sorted
 
-# Compute Revenue Change (June vs May)
-revenue_mom = df_metric.groupby("year_month")["Amount"].sum()
+# Create a mapping of months to index positions for the slider
+month_labels = {i: label for i, label in enumerate(all_months_sorted)}
+
+# Filter only last 2 months
+df_month_values = (
+    df.groupby('year_month').agg({'Amount': 'sum', 'Qty': 'sum'})
+    .sort_index()
+)[-2:]
+# create list of the last 2 months and filter for metric
+last2_months = df_month_values.index.to_list()
+df_metric = df[df["year_month"].isin(last2_months)]
+
+# Compute Revenue Change over the last 2 months
+revenue_mom = df_month_values[['Amount']]
 
 # Ensure we have at least two months of data before computing the percentage change
 if len(revenue_mom) > 1:
-    revenue_mom_change = (revenue_mom.pct_change().iloc[-1]) * 100
+    revenue_mom_change = (revenue_mom.pct_change().iloc[-1].item())
 else:
     revenue_mom_change = 0  # Default to 0% change if not enough data
 
-
 # Compute Quantity Sold Change
-qty_mom = df_metric.groupby("year_month")["Qty"].sum()
+qty_mom = df_month_values[['Qty']]
 # Ensure we have at least two months of data before computing the percentage change
 if len(qty_mom) > 1:
-    quantity_mom_change = (qty_mom.pct_change().iloc[-1]) * 100
+    quantity_mom_change = (qty_mom.pct_change().iloc[-1].item())
 else:
     quantity_mom_change = 0  # Default to 0% change if not enough data
 
 
-total_revenue_june = revenue_mom["2022-06"]
-total_quantity_june = qty_mom["2022-06"]
+total_revenue_current = revenue_mom.iloc[-1].item()
+total_quantity_current = qty_mom.iloc[-1].item()
 
 # Compute Completed Orders Percentage
 completed_status = ["Shipped", "Shipped - Delivered to Buyer", "Shipped - Picked Up", "Shipped - Out for Delivery"]
@@ -55,14 +87,18 @@ df.loc[:, "order_status_category"] = df["Status"].apply(lambda x: "Completed" if
 
 monthly_counts = df.groupby("year_month")["order_status_category"].count()
 completed_counts = df[df["order_status_category"] == "Completed"].groupby("year_month")["order_status_category"].count()
-completion_rate = (completed_counts / monthly_counts) * 100
-completion_rate_june = completion_rate["2022-06"]
-# Ensure May data exists before accessing
-if "2022-05" in completion_rate.index:
-    completion_rate_may = completion_rate["2022-05"]
-    completion_rate_mom_change = ((completion_rate_june - completion_rate_may) / completion_rate_may) * 100
+
+# get the completion rate, ensure values sorted by month
+completion_rate = (completed_counts / monthly_counts).sort_index() * 100
+
+
+completion_rate_current = completion_rate.iloc[-1]
+# Ensure 2+ months worth of data exists before accessing
+if len(completion_rate.index)>1:
+    completion_rate_prev = completion_rate.iloc[-2]
+    completion_rate_mom_change = ((completion_rate_current - completion_rate_prev) / completion_rate_prev) * 100
 else:
-    completion_rate_mom_change = 0  # Default to 0% if May data is missing
+    completion_rate_mom_change = 0  # Default to 0% if only one month of data
 
 
 
@@ -97,8 +133,8 @@ metric_1 = dbc.Card(
     dbc.CardBody(
         [
             html.H3("Revenue", className="card-title", style={"font-size": "18px"}),
-            html.H1(f"${total_revenue_june:,.2f}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
-            html.Small(f"Compared to previous month: {revenue_mom_change:+.1f}%",
+            html.H1(f"${format_large_num(total_revenue_current)}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
+            html.Small(f"Compared to previous month: {revenue_mom_change:+.1%}",
                        className="card-text text-muted", style={"font-size": "14px"})
         ]
     ),
@@ -109,8 +145,8 @@ metric_2 = dbc.Card(
     dbc.CardBody(
         [
             html.H3("Quantity Sold", className="card-title", style={"font-size": "18px"}),
-            html.H1(f"{total_quantity_june:,.0f}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
-            html.Small(f"Compared to previous month: {quantity_mom_change:+.1f}%",
+            html.H1(f"{format_large_num(total_quantity_current)}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
+            html.Small(f"Compared to previous month: {quantity_mom_change:+.1%}",
                        className="card-text text-muted", style={"font-size": "14px"})
         ]
     ),
@@ -121,7 +157,7 @@ metric_3 = dbc.Card(
     dbc.CardBody(
         [
             html.H3("Completed Orders", className="card-title", style={"font-size": "18px"}),
-            html.H1(f"{completion_rate_june:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
+            html.H1(f"{completion_rate_current:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
             html.Small(f"Compared to previous month: {completion_rate_mom_change:+.1f}%",
                        className="card-text text-muted", style={"font-size": "14px"})
         ]
@@ -135,13 +171,7 @@ metrics = dbc.Row([
     dbc.Col(metric_3),
 ])
 
-# Filters
-# Extract all unique year-month values from the full dataset
-all_months = df["year_month"].unique()
-all_months_sorted = sorted(all_months)  # Ensure months are sorted
-
-# Create a mapping of months to index positions for the slider
-month_labels = {i: label for i, label in enumerate(all_months_sorted)}
+## Filters
 
 # Date (Month) Slider
 date_slider = dcc.Slider(
@@ -185,22 +215,12 @@ fulfillment_radio = dbc.Col([
 ], width=3)
 
 
-# Checkbox for order status
+# Checkbox for order status, use grouped statuses
 status_checkbox = dbc.Col([
     dcc.Checklist(
         id="status-checkbox",
-        options=[
-            {"label": "Shipped", "value": "Shipped"},
-            {"label": "Delivered to Buyer", "value": "Shipped - Delivered to Buyer"},
-            {"label": "Picked Up", "value": "Shipped - Picked Up"},
-            {"label": "Out for Delivery", "value": "Shipped - Out for Delivery"},
-            {"label": "Cancelled", "value": "Cancelled"},
-            {"label": "Returned to Seller", "value": "Shipped - Returned to Seller"},
-            {"label": "Lost in Transit", "value": "Shipped - Lost in Transit"},
-            {"label": "Pending", "value": "Pending"},
-            {"label": "Shipping", "value": "Shipping"}
-        ],
-        value=["Shipped", "Shipped - Delivered to Buyer"],  # Default selection
+        options=[key for key, _ in status_mapping.items() ],
+        value=["Shipped"],  # Default selection
         inline=False  # Display vertically
     )
 ])
@@ -224,7 +244,7 @@ filters = dbc.Col([
             ),
             html.Hr(),
 
-            html.Label("Promotions Applied:", className="fw-bold mt-3", style={"color": "#34495e"}),
+            html.Label("Promotions Only:", className="fw-bold mt-3", style={"color": "#34495e"}),
             dbc.Switch(id="promotion-toggle", value=False, className="ms-2"),
             html.Hr(),
 
@@ -245,17 +265,20 @@ filters = dbc.Col([
             html.Label("Order Status:", className="fw-bold mt-3", style={"color": "#34495e"}),
             dbc.Checklist(
                 id="status-checkbox",
-                options=[{"label": x, "value": x} for x in df["Status"].unique()],
+                options=[key for key, _ in status_mapping.items() ],
                 inline=False,
                 className="mt-2"
-            )
+            ),
+            html.Br(),
+
+            html.Div(id = "filtered-data", style={"font-size": "8px", "font-style": "italic"})
         ]),
         className="shadow-sm rounded-3 p-4",
         style={"background-color": "#ffffff", "border": "1px solid #ddd", "width": "350px"}  # Reduced width
     )
 ], width="auto", className="d-flex justify-content-center")
 
-
+## end filter
 
 # Charts
 chart1 = None  # Placeholder for chart 1
@@ -299,7 +322,7 @@ app.layout = dbc.Container([
 # Server side callbacks/reactivity
 @app.callback(
     Output("filtered-data", "children"),  # Debugging output
-    Output("filtered-df-store", "data"),  # Store filtered data for teammates
+    #Output("filtered-df-store", "data"),  # Store filtered data for teammates
     Input("date-slider", "value"),
     Input("promotion-toggle", "value"),
     Input("fulfillment-radio", "value"),
@@ -310,29 +333,34 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     selected_date = month_labels.get(selected_index, None)
 
     if not selected_date:
-        return "Invalid date selection.", dash.no_update
+        return "No selection"
 
-    # Filter dataset based on selected month
-    filtered_df = df[df["year_month"] == selected_date]
+    # set end date to proper date
+    filter_end_date = pd.to_datetime(f'{selected_date}-01') + pd.DateOffset(months = 1)
+    filter_condition = '(Date < @filter_end_date)'
 
     # Apply promotion filter
     if promo_filter:
-        filtered_df = filtered_df[filtered_df["Promo"] > 0]  # Assuming "Promo" > 0 means applied
+        #filter_condition &= (df['is_promotion'])
+        filter_condition += ' & (is_promotion == True)'
 
-    # Apply fulfillment filter
-    # Apply fulfillment filter
+    # Apply fulfillment filter if selection is not Both
     if fulfillment_filter != "Both":  # If not "Both", filter accordingly
-        filtered_df = filtered_df[filtered_df["Fulfillment"] == fulfillment_filter]
+        filter_condition += ' & (Fulfilment == @fulfillment_filter)'
 
 
     # Apply order status filter
     if selected_statuses:
-        filtered_df = filtered_df[filtered_df["Status"].isin(selected_statuses)]
+        #filter_condition &= (df[df["Status"].isin(selected_statuses)])
+        filter_statuses = [item for key, values in status_mapping.items() for item in values if key in selected_statuses ]
+        filter_condition += ' & (Status.isin(@filter_statuses))'
 
     # Store the filtered dataset as JSON (so teammates can use it)
+    # print(filter_condition)
+    filtered_df = df.query(filter_condition)    
     filtered_data_json = filtered_df.to_json(orient="split")
 
-    return f"Filtered dataset contains {len(filtered_df)} records for {selected_date}.", filtered_data_json
+    return f"Showing {len(filtered_df):,.0f} records up to {selected_date}."#, filtered_data_json
 
 
 # Run the app/dashboard
