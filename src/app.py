@@ -319,7 +319,7 @@ app.layout = dbc.Container([
 # Server side callbacks/reactivity
 @app.callback(
     Output("filtered-data", "children"),  # Debugging output
-    Output("filtered-df-store", "data"),  # Store filtered data for teammates
+    #Output("filtered-df-store", "data"),  # Store filtered data for teammates
     Input("date-slider", "value"),
     Input("promotion-toggle", "value"),
     Input("fulfillment-radio", "value"),
