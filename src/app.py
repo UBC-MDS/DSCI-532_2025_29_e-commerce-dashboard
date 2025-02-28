@@ -365,5 +365,5 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 
 # Run the app/dashboard
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
     
