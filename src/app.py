@@ -368,7 +368,9 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
         filter_condition += f' & (state == "{state}")'
 
     # Store the filtered dataset
+    print(f'query is {filter_condition}')
     filtered_df = df.query(filter_condition)
+    print(f'query columns are {filtered_df.columns}')
 
     return f"Showing {len(filtered_df):,.0f} records up to {selected_date}.", filter_condition
 
@@ -378,7 +380,7 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     # prevent_initial_call=True
 )
 def create_sales_chart(query):
-    print(f'query is {query}')
+    print('Creating sales chart')
     selection = df.query(query)
     sales = alt.Chart(selection, width='container', title="Monthly Sales"
                       ).mark_line().encode(
