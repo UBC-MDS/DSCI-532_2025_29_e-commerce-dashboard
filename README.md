@@ -49,7 +49,12 @@ Interested in running the dashboard locally or contributing to its development? 
 
 Want to run the dashboard on your machine? Follow these steps:
 
-#### Setup
+### Prerequisites
+
+- `Python 3.11+`
+- `git`
+
+### Setup
 
 1. **Clone the Repository:**
 
@@ -58,30 +63,44 @@ git clone https://github.com/UBC-MDS/DSCI-532_2025_29_e-commerce-dashboard.git
 cd e-commerce-sales-dashboard
 ```
 
+2. **Install Dependencies:**
 
+**For users without `conda`:**
 
+```bash
+pip install -r requirements.txt
+```
 
-
-## Installation
-
-From the root directory of this repo:
+**For `conda` users:**
 
 1. Create conda environment
 ```bash
-conda env create -n dashboard -f environment.yml
+conda env create -n e-commerce-dashboard -f environment.yml
 ```
 
 2. Activate conda environment
 ```bash
-conda activate dashboard
+conda activate e-commerce-dashboard
 ```
 
-3. Run Dash app
+If the environment already exists and you want to update it:
+```bash
+conda env update -n e-commerce-dashboard -f environment.yml
+```
+
+
+3. **Run the App:**
 ```bash
 python src/app.py
 ```
 
-Navigate to `http://127.0.0.1:8050/` in the browser to see the dashboard. 
+Navigate to `http://127.0.0.1:8050/`  (or the specified port) in your browser to see the dashboard. 
+
+## Contributing
+We’d love for you to contribute to this project! Whether it’s adding new features, improving visualizations, or fixing bugs, your input is valuable. Check out our [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to get started.
+
+## Support
+Encountered a problem or have a question? Please open an [issue](https://github.com/UBC-MDS/DSCI-532_2025_29_e-commerce-dashboard/issues) on this repository, and we’ll get back to you as soon as possible.
 
 ## Contributors
 Jenson Chang, Shashank Hosahalli Shivamurthy, Sienko Ikhabi, Yajing Liu
