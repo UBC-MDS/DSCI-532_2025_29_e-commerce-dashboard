@@ -12,6 +12,7 @@ world_regions = gpd.read_file(url)[['wikipedia', 'name', 'admin', 'postal', 'lat
 
 # Initiatlize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
 
 # Layout
 app.layout = dbc.Container([
@@ -47,4 +48,4 @@ def print_selection(clicked_region):
 
 # Run the app/dashboard
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
