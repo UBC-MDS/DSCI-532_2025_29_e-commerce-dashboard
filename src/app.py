@@ -148,7 +148,7 @@ app.layout = dbc.Container([
 @app.callback(
     Output("sales", "spec"),
     Input("map", "signalData"),
-    # prevent_initial_call=True
+    prevent_initial_call=True
 )
 def create_sales_chart(signal_data):
     print(signal_data)
@@ -169,7 +169,7 @@ def create_sales_chart(signal_data):
 @app.callback(
     Output("product", "spec"),
     Input("map", "signalData"),
-    # prevent_initial_call=True
+    prevent_initial_call=True
 )
 def create_product_chart(signal_data):
     print(signal_data)
