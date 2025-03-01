@@ -145,7 +145,7 @@ app.layout = dbc.Container([
 ])
 
 # Server side callbacks/reactivity
-@callback(
+@app.callback(
     Output("sales", "spec"),
     Input("map", "signalData"),
     # prevent_initial_call=True
@@ -165,7 +165,7 @@ def create_sales_chart(signal_data):
 
     return sales
 
-@callback(
+@app.callback(
     Output("product", "spec"),
     Input("map", "signalData"),
     # prevent_initial_call=True
