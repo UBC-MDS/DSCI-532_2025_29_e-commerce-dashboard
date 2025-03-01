@@ -1,4 +1,4 @@
-altair==5.5.*
+altair-all==5.5.*
 dash==2.18.*
 dash-bootstrap-components==1.7.*
 dash-vega-components==0.11.*

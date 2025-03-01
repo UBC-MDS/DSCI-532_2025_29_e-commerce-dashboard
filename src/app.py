@@ -16,7 +16,7 @@ def import_data():
     # Drop last column
     df = df.iloc[:, :-1]  # Drop last column
 
-    # Rename column name and drop na values
+    # Rename column name and drop na valuesconda 
     df.rename(columns={'ship-state' : 'state'}, inplace=True)
     df['state'] = df['state'].str.title()
     df['state'].dropna(inplace=True)
@@ -404,4 +404,4 @@ def create_product_chart(query):
 
 # Run the app/dashboard
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
