@@ -29,7 +29,6 @@ def import_data():
 
     # Rename values in df
     df['state'] = df['state'].replace(state_mapping)
-    df.dropna(inplace=True)
 
     # ship_states = set(df['state'].unique())
     # india_states = set(india['state'].unique())
@@ -42,10 +41,6 @@ def import_data():
     print(df.columns)
     return df, india
 
-# Initiatlize the app
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
-server = app.server
-
 # Data
 df, india = import_data()
 
@@ -56,6 +51,9 @@ map = alt.Chart(india, width='container').mark_geoshape(stroke='grey').encode(
             alt.selection_point(fields=["state"], name="selected_states")
         ).to_dict(format='vega')
 
+# Initiatlize the app
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
 
 # Layout
 app.layout = dbc.Container([
