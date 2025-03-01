@@ -4,6 +4,8 @@ import pandas as pd
 import geopandas as gpd
 import plotly.express as px
 import plotly.graph_objects as go
+from git import Repo
+from datetime import datetime
 
 # Import sales data for dashboard
 def import_data():
@@ -50,6 +52,17 @@ def format_large_num(value):
         value /= 1000.0
     return '{}{}'.format('{:f}'.format(value).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
 
+# Function to get the latest commit date
+def get_latest_commit_date():
+    try: #included to handle any error gracefully
+        repo = Repo(".") 
+        latest_commit = repo.head.commit
+        commit_date = datetime.fromtimestamp(latest_commit.committed_date)
+        return commit_date.strftime("%B %d, %Y")  
+    except Exception as e:
+        print(f"Error fetching commit date: {e}")
+        return "Unknown Date"
+    
 # Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.YETI])
 server = app.server
@@ -169,6 +182,21 @@ metrics = dbc.Row([
     dbc.Col(metric_3)
 ], id='metrics')
 
+# Get the dynamic date
+footer_date = get_latest_commit_date()
+
+## Footer - This includes title, group number and names of members, last updated date
+footer = dbc.Row(
+        dbc.Col(
+            html.P([
+                html.A("E-Commerce Sales Dashboard:", href="https://github.com/UBC-MDS/DSCI-532_2025_29_e-commerce-dashboard", target="_blank"),
+                " A tool to analyze sales performance and market trends for e-commerce clothing stores. ",
+                "Created by Group 29 - Jenson, Shashank, Sienko, Yajing. ",
+                f" | Last Updated: {footer_date}"
+            ], className="text-muted text-center small")
+        ),
+        className="mt-4"  
+    )
 ## Filters
 
 # Date (Month) Slider
@@ -319,7 +347,8 @@ app.layout = dbc.Container([
             html.Hr(),  # Horizontal line for better separation
             visuals  # Charts and map appear directly below the metrics
         ], width=9)
-    ], align="start", className="mb-4")
+    ], align="start", className="mb-4"), 
+    footer
 ], fluid=True)
 
 # Server side callbacks/reactivity
