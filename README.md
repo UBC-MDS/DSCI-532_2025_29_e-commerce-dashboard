@@ -45,8 +45,20 @@ If you’re an e-commerce professional in India, this tool is for you! Whether y
 Interested in running the dashboard locally or contributing to its development? We’d love your help! This project is built with a passion for data science and e-commerce, and we welcome contributors who want to enhance its features or adapt it for other datasets. Keep reading for setup instructions and contribution details!
 
 
-## About
-This is a dashboard project visualizing E-commerce data from Amazon India. The dashboard is built using Python and Plotly Dash. 
+## Installation and Running Locally
+
+Want to run the dashboard on your machine? Follow these steps:
+
+#### Setup
+
+1. **Clone the Repository:**
+
+```bash
+git clone https://github.com/UBC-MDS/DSCI-532_2025_29_e-commerce-dashboard.git
+cd e-commerce-sales-dashboard
+```
+
+
 
 
 
