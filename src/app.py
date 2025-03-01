@@ -302,7 +302,7 @@ visuals = dbc.Row([
             dbc.Col([
                 dbc.Row(dvc.Vega(id='map', spec=map, signalsToObserve=['selected_states'])),
                 dbc.Row([
-                    # dbc.Col(dvc.Vega(id='sales', spec={})),
+                    dbc.Col(dvc.Vega(id='sales', spec={})),
                     # dbc.Col(dvc.Vega(id='product', spec={}))
                 ]),
             ], 'charts'),
@@ -374,10 +374,9 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 
     return f"Showing {len(filtered_df):,.0f} records up to {selected_date}.", filter_condition
 
-@callback(
+@app.callback(
     Output("sales", "spec"),
     Input("filter_condition", "data")
-    # prevent_initial_call=True
 )
 def create_sales_chart(query):
     print('Creating sales chart')
