@@ -3,6 +3,8 @@
 ## About
 This is a dashboard project visualizing E-commerce data from Amazon India. The dashboard is built using Python and Plotly Dash. 
 
+![App in Action](img/demo.gif)
+
 ## Installation
 
 From the root directory of this repo:
