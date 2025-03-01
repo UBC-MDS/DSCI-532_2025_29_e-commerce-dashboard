@@ -8,7 +8,7 @@ import geopandas as gpd
 alt.data_transformers.enable('vegafusion')
 
 def import_data():
-    df = pd.read_csv('data/raw/amazon_sample.csv', nrows=1000)
+    df = pd.read_csv('data/raw/amazon_sample.zip', nrows=1000)
     df = df.iloc[:, :-1]  # Drop last column
     df.rename(columns={'ship-state' : 'state'}, inplace=True)
     df['state'] = df['state'].str.title()
