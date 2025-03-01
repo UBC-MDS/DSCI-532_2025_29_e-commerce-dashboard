@@ -388,22 +388,22 @@ def create_sales_chart(query):
 
     return sales
 
-@callback(
-    Output("product", "spec"),
-    Input("filter_condition", "data")
-    # prevent_initial_call=True
-)
-def create_product_chart(query):
-    selection = df.query(query)
-    selection = selection.groupby('Category')['Amount'].sum().reset_index()
+# @callback(
+#     Output("product", "spec"),
+#     Input("filter_condition", "data")
+#     # prevent_initial_call=True
+# )
+# def create_product_chart(query):
+#     selection = df.query(query)
+#     selection = selection.groupby('Category')['Amount'].sum().reset_index()
     
-    product = alt.Chart(selection, width='container', title="Product Categories"
-                        ).mark_arc(innerRadius=50).encode(
-                            theta="Amount",
-                            color=alt.Color(field="Category", type="nominal", legend=alt.Legend(title=None)),
-                        ).to_dict(format='vega')
+#     product = alt.Chart(selection, width='container', title="Product Categories"
+#                         ).mark_arc(innerRadius=50).encode(
+#                             theta="Amount",
+#                             color=alt.Color(field="Category", type="nominal", legend=alt.Legend(title=None)),
+#                         ).to_dict(format='vega')
 
-    return product
+#     return product
 
 # Run the app/dashboard
 if __name__ == '__main__':
