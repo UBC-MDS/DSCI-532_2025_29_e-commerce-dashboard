@@ -25,16 +25,17 @@
 ## Known Issues ## 
 - Colors on the map is fixed right now and does not update based on the filtering criteria (Issue #39)
 - Map only supports single State selection and does not support multi selection (Issue #39)
-- Pan, zoom, reset not fully tested on all the charts
-- Overall dashboard theme and chart aesethetics to be improved in Milestone 3 (Issue #33)
+- Pan, zoom, reset not fully tested on all the charts (Issue #61)
+- Overall dashboard theme and chart aesethetics to be improved in Milestone 3 (Issues #33, #39, #40, #44, #62)
 
 ## Deviation from Best Practice ##
-- Pie chart could be cluttered when there are too many categories. If categories are close in size, the user has to use the tooltip to view exact amount.
+- Pie chart could be cluttered when there are many categories to display. If categories are close in size, the user is not able to tell which is bigger (we added the computed % of total for this). However, if the category is very small, the text is not visible and the user has to use the tooltip to view exact amount for such categories.
 
 ## Limitations and Future Improvements ##
-- Summary statistics is fixed right now by design. Currently they are considered to be "current status" and not part of the analysis. However there are discussions within the group on whether these should be part of the filtering/analysis. 
+- Summary statistics is fixed right now by design. Currently they are considered to be "current status" and not part of the analysis. However there are discussions within the group on whether these should be part of what is updated as the user is doing filtering/analysis. 
 - Dashboard is being developed with using a subset (~13,000 records) of the full data (~130,000 records). Full dashboard performance will be tested later on with the entire dataset. 
 - Suitability of a pie chart for product category could be re-evaulated. 
 - Quality-of-life feature can be considered for the future 
     - Highlighting the state that's been selected by the user on the map
     - A State dropdown list next to the map if the user wants to analyze a specific state and don't know where it is on the map
+- Add a summary visualization (bar chart) showing sales total by state ordered for the top N states
