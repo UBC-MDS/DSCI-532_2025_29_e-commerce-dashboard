@@ -360,7 +360,6 @@ app.layout = dbc.Container([
 # Server side callbacks/reactivity
 @app.callback(
     Output("filtered-data", "children"),  # Debugging output
-    Output("filter_condition", "data"),
     Input("date-slider", "value"),
     Input("promotion-toggle", "value"),
     Input("fulfillment-radio", "value"),
@@ -378,7 +377,7 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     filtered_df = df.query(filter_condition)
     print(f'query columns are {filtered_df.columns}')
 
-    return f"Showing {len(filtered_df):,.0f} records up to {selected_date}.", filter_condition
+    return f"Showing {len(filtered_df):,.0f} records up to {selected_date}."
 
 @app.callback(
     Output("sales", "spec"),
