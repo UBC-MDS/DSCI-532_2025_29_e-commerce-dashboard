@@ -296,12 +296,18 @@ map = alt.Chart(india, width='container', title="Sales by State and Territories"
             alt.selection_point(fields=["state"], name="selected_states")
         ).to_dict(format='vega')
 
+sales = alt.Chart(df, width='container', title="Monthly Sales"
+                      ).mark_line().encode(
+                        x=alt.X('yearmonth(Date):T', title='Month'),
+                        y=alt.Y('sum(Amount):Q', title='Total Amount')
+                    ).to_dict(format='vega')
+
 # Visuals
 visuals = dbc.Row([
             dbc.Col([
                 dbc.Row(dvc.Vega(id='map', spec=map, signalsToObserve=['selected_states'])),
                 dbc.Row([
-                    dbc.Col(dvc.Vega(id='sales', spec={})),
+                    dbc.Col(dvc.Vega(id='sales', spec=sales)),
                     dbc.Col(dvc.Vega(id='product', spec={}))
                 ]),
             ], 'charts'),
@@ -380,7 +386,6 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 def create_sales_chart(query):
     print('Creating sales chart')
     selection = df.query(query)
-    selection = df
     sales = alt.Chart(selection, width='container', title="Monthly Sales"
                       ).mark_line().encode(
                         x=alt.X('yearmonth(Date):T', title='Month'),
