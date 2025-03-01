@@ -284,17 +284,23 @@ fig = px.choropleth(
     color='Amount',
     hover_name='state',
     hover_data=['Amount'],
-    title="Sales by State and Territories"
+    title="Sales by State and Territories",
+    color_continuous_scale=px.colors.sequential.Bluyl  # Change the color theme
 )
 fig.update_geos(fitbounds="locations", visible=False)
+fig.update_layout(
+    coloraxis_showscale=False,
+    modebar=dict(remove=['select', 'lasso2d'])
+)
 
 # Visuals
 visuals = dbc.Row([
-    dbc.Col([
-        dcc.Graph(id='map', figure=fig),
-        dcc.Graph(id='sales', figure={}),
-        dcc.Graph(id='product', figure={})
-    ], 'charts'),
+        dbc.Row([
+            dcc.Graph(id='map', figure=fig)]),
+        dbc.Row([
+            dbc.Col([dcc.Graph(id='sales', figure={})]),
+            dbc.Col([dcc.Graph(id='product', figure={})])
+        ])
 ], id='visuals')
 
 # Layout
@@ -360,6 +366,34 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 
     return f"Showing {len(filtered_df):,.0f} records up to {selected_date}.", filter_condition
 
+# @callback(
+#     Output("map", "figure"),
+#     Input("filter_condition", "data")
+# )
+# def create_map(query):
+#     states = df['state'].unique()
+#     state_sales = df.query(query).groupby('state')['Amount'].sum().reset_index()
+
+#     # Populate states with no data with 0
+#     all_states = pd.DataFrame({'state': states})
+#     state_sales = all_states.merge(state_sales, on='state', how='left').fillna(0)
+
+#     fig = px.choropleth(
+#         state_sales,
+#         geojson=india.__geo_interface__,
+#         locations='state',
+#         featureidkey="properties.state",
+#         color='Amount',
+#         hover_name='state',
+#         hover_data=['Amount'],
+#         title="Sales by State and Territories",    
+#         color_continuous_scale=px.colors.sequential.Bluyl  # Change the color theme
+#     )
+#     fig.update_geos(fitbounds="locations", visible=False)
+#     fig.update_layout(coloraxis_showscale=False)
+
+#     return fig
+
 @callback(
     Output("sales", "figure"),
     Input("filter_condition", "data")
@@ -370,13 +404,19 @@ def create_sales_chart(query):
         selection = df.query(query)
         # Group by year_month and sum the Amount
         selection = selection.groupby('year_month')['Amount'].sum().reset_index()
+        selection['year_month'] = pd.to_datetime(selection['year_month'])
         sales = px.line(
             selection,
             x='year_month',
             y='Amount',
             title='Monthly Sales',
-            labels={'year_month': 'Month', 'Amount': 'Total Amount'},
+            labels={'year_month': 'Month', 'Amount': 'Total Sales'},
             line_shape='linear'
+        )
+        # Disable pan and zoom
+        sales.update_layout(
+            xaxis=dict(fixedrange=True),
+            yaxis=dict(fixedrange=True)
         )
         return sales
     except Exception as e:
