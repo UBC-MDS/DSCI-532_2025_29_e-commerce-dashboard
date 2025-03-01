@@ -328,13 +328,13 @@ app.layout = dbc.Container([
 
 # Server side callbacks/reactivity
 @app.callback(
-    Output("filtered-data", "children"),  # Debugging output
-    Output("filter_condition", "data"),
-    Input("date-slider", "value"),
+    [Output("filtered-data", "children"),  # Debugging output
+    Output("filter_condition", "data")],
+    [Input("date-slider", "value"),
     Input("promotion-toggle", "value"),
     Input("fulfillment-radio", "value"),
     Input("status-checkbox", "value"),
-    Input("map", "signalData"),
+    Input("map", "signalData")]
 )
 def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selected_statuses, signal_data):
     print(f'signal_data is {signal_data}')
