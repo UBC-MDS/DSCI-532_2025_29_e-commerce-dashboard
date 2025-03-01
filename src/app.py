@@ -61,7 +61,7 @@ def format_large_num(value):
     return '{}{}'.format('{:f}'.format(value).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
 
 # Initialize the app
-app = Dash(__name__, external_stylesheets=[dbc.themes.LUMEN])
+app = Dash(__name__, external_stylesheets=[dbc.themes.YETI])
 server = app.server
 
 # Data
@@ -135,7 +135,7 @@ else:
 
 # Components
 # Header / Title
-title = dbc.Row(html.H1("Sales Dashboard"), id='title')
+title = dbc.Row(html.H1("Sales Dashboard"), className="bg-secondary text-black p-2 mb-4 text-center", id='title')
 
 # Metrics Cards using computed values
 metric_1 = dbc.Card(
@@ -286,7 +286,7 @@ filters = dbc.Col([
 
 # Charts
 state_sales = df.groupby('state')['Amount'].sum().reset_index()
-map = alt.Chart(india, width='container').mark_geoshape(stroke='grey').encode(
+map = alt.Chart(india, width='container', title="Sales by State and Territories").mark_geoshape(stroke='grey').encode(
             color=alt.Color("Amount:Q", legend=None),
             tooltip=['state:N', 'Amount:Q']
         ).transform_lookup(
@@ -318,7 +318,6 @@ app.layout = dbc.Container([
     # Filters on the left, Metrics & Charts stacked in a single column
     dbc.Row([
         dbc.Col(filters, width=3),  # Filters stay on the left
-
         dbc.Col([  # Metrics and Charts in one column to align properly
             metrics,
             html.Hr(),  # Horizontal line for better separation
@@ -378,10 +377,11 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 )
 def create_sales_chart(query):
     selection = df.query(query)
-    sales = alt.Chart(selection, width='container').mark_line().encode(
-                x=alt.X('yearmonth(Date):T', title='Month'),
-                y=alt.Y('sum(Amount):Q', title='Total Amount')
-            ).to_dict(format='vega')
+    sales = alt.Chart(selection, width='container', title="Monthly Sales"
+                      ).mark_line().encode(
+                        x=alt.X('yearmonth(Date):T', title='Month'),
+                        y=alt.Y('sum(Amount):Q', title='Total Amount')
+                    ).to_dict(format='vega')
 
     return sales
 
@@ -394,10 +394,11 @@ def create_product_chart(query):
     selection = df.query(query)
     selection = selection.groupby('Category')['Amount'].sum().reset_index()
     
-    product = alt.Chart(selection, width='container').mark_arc(innerRadius=50).encode(
-                theta="Amount",
-                color="Category:N",
-            ).to_dict(format='vega')
+    product = alt.Chart(selection, width='container', title="Product Categories"
+                        ).mark_arc(innerRadius=50).encode(
+                            theta="Amount",
+                            color=alt.Color(field="Category", type="nominal", legend=alt.Legend(title=None)),
+                        ).to_dict(format='vega')
 
     return product
 
