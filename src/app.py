@@ -69,11 +69,8 @@ app.layout = dbc.Container([
 )
 def create_sales_chart(signal_data):
     print(signal_data)
-    if signal_data and 'state' in signal_data['select_states']:
-        state = signal_data['select_states']['state'][0]
-        selection = df[df['state'] == state]
-    else:
-        selection = df
+    state = 'Delhi'
+    selection = df[df['state'] == state]
 
     sales = alt.Chart(selection, width='container').mark_line().encode(
                 x=alt.X('yearmonth(Date):T', title='Month'),
@@ -84,4 +81,4 @@ def create_sales_chart(signal_data):
 
 # Run the app/dashboard
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
