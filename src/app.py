@@ -12,6 +12,7 @@ def import_data():
 
     # Import and clean sales data
     df = pd.read_csv('data/raw/amazon_sample.zip')
+    df = df.sample(1000)
 
     # Drop last column
     df = df.iloc[:, :-1]  # Drop last column
