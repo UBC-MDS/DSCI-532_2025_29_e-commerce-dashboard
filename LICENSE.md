@@ -1,4 +1,4 @@
-MIT License
+## MIT License
 
 Copyright (c) 2025, * Jenson Chang, Shashank Hosahalli Shivamurthy, Sienko Ikhabi, Yajing Liu
 
@@ -19,3 +19,18 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+
+## Creative Commons Attribution 4.0 International (CC BY 4.0)
+
+All the reports and images located in `reports/` and `img/` directories (e.g., `m1_proposal.md`) are licensed under the **Creative Commons Attribution 4.0 International License (CC BY 4.0)**. This license allows you to share and adapt the report for any purpose, even commercially, provided you give appropriate credit to the authors.
+
+You are free to:
+- **Share**: copy and redistribute the material in any medium or format for any purpose, even commercially.
+- **Adapt**: remix, transform, and build upon the material for any purpose, even commercially.
+
+Under the following terms:
+- **Attribution**: You must give appropriate credit to the authors (Jenson Chang, Shashank Hosahalli Shivamurthy, Sienko Ikhabi, Yajing Liu), provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the authors endorse you or your use.
+
+The full legal text of the license is available at: [https://creativecommons.org/licenses/by/4.0/](https://creativecommons.org/licenses/by/4.0/).
