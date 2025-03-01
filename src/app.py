@@ -60,6 +60,31 @@ def format_large_num(value):
         value /= 1000.0
     return '{}{}'.format('{:f}'.format(value).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
 
+def get_query(selected_date, promo_filter, fulfillment_filter, selected_statuses, state):
+    # Set end date to proper date
+    filter_end_date = pd.to_datetime(f'{selected_date}-01') + pd.DateOffset(months=1)
+    filter_condition = f'(Date < "{filter_end_date}")'
+
+    # Apply promotion filter
+    if promo_filter:
+        filter_condition += ' & (is_promotion == True)'
+
+    # Apply fulfillment filter if selection is not Both
+    if fulfillment_filter != "Both":  # If not "Both", filter accordingly
+        filter_condition += f' & (Fulfilment == "{fulfillment_filter}")'
+
+    # Apply order status filter
+    if selected_statuses:
+        filter_statuses = [item for key, values in status_mapping.items() for item in values if key in selected_statuses]
+        filter_statuses_str = ', '.join([f'"{status}"' for status in filter_statuses])
+        filter_condition += f' & (Status in [{filter_statuses_str}])'
+
+    if state and 'state' in state['selected_states']:
+        state = state['selected_states']['state'][0]
+        filter_condition += f' & (state == "{state}")'
+    
+    return filter_condition
+
 # Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.YETI])
 server = app.server
@@ -347,30 +372,7 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     # Convert slider index to corresponding year-month
     selected_date = month_labels.get(selected_index, None)
 
-    if not selected_date:
-        return "No selection"
-
-    # set end date to proper date
-    filter_end_date = pd.to_datetime(f'{selected_date}-01') + pd.DateOffset(months=1)
-    filter_condition = f'(Date < "{filter_end_date}")'
-
-    # Apply promotion filter
-    if promo_filter:
-        filter_condition += ' & (is_promotion == True)'
-
-    # Apply fulfillment filter if selection is not Both
-    if fulfillment_filter != "Both":  # If not "Both", filter accordingly
-        filter_condition += f' & (Fulfilment == "{fulfillment_filter}")'
-
-    # Apply order status filter
-    if selected_statuses:
-        filter_statuses = [item for key, values in status_mapping.items() for item in values if key in selected_statuses]
-        filter_statuses_str = ', '.join([f'"{status}"' for status in filter_statuses])
-        filter_condition += f' & (Status in [{filter_statuses_str}])'
-
-    if signal_data and 'state' in signal_data['selected_states']:
-        state = signal_data['selected_states']['state'][0]
-        filter_condition += f' & (state == "{state}")'
+    filter_condition = get_query(selected_date, promo_filter, fulfillment_filter, selected_statuses, signal_data)
 
     # Store the filtered dataset
     print(f'query is {filter_condition}')
