@@ -12,6 +12,7 @@ dependencies:
   - pip
   - pip:
       - dash-vega-components==0.11.0
+      - gitpython==3.1.43
       - vegafusion==1.6.9
       - vegafusion-python-embed==1.6.9
       - vl-convert-python==1.7.0
