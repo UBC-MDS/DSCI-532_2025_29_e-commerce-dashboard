@@ -75,8 +75,7 @@ def create_sales_chart(signal_data):
     else:
         state = signal_data['selected_states']['state'][0]
         selection = df[df['state'] == state]
-    print(state)
-    selection = df[df['state'] == state]
+
     sales = alt.Chart(selection, width='container').mark_line().encode(
                 x=alt.X('yearmonth(Date):T', title='Month'),
                 y=alt.Y('sum(Amount):Q', title='Total Amount')
