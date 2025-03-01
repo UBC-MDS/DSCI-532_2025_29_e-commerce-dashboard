@@ -301,14 +301,14 @@ visuals = dbc.Row([
                 dbc.Row(dvc.Vega(id='map', spec=map)),
                 dbc.Row([
                     dbc.Col(dvc.Vega(id='sales', spec={})),
-                    dbc.Col(dvc.Vega(id='product', spec={}))
+                    # dbc.Col(dvc.Vega(id='product', spec={}))
                 ]),
             ], 'charts'),
         ], id='visuals')
 
 # Layout
 app.layout = dbc.Container([
-    dcc.Store(id="filter_condition", data={}),
+    dcc.Store(id="filter_condition"),
     # Title
     dbc.Row([
         dbc.Col(title, width=12)
@@ -327,15 +327,15 @@ app.layout = dbc.Container([
 
 # Server side callbacks/reactivity
 @app.callback(
-    Output("filtered-data", "children"),  # Debugging output
+    # Output("filtered-data", "children"),  # Debugging output
     Output("filter_condition", "data"),
     Input("date-slider", "value"),
-    Input("promotion-toggle", "value"),
-    Input("fulfillment-radio", "value"),
-    Input("status-checkbox", "value"),
+    # Input("promotion-toggle", "value"),
+    # Input("fulfillment-radio", "value"),
+    # Input("status-checkbox", "value"),
     #Input("map", "signalData"),
 )
-def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selected_statuses):
+def update_filtered_data(selected_index):
     # Convert slider index to corresponding year-month
     selected_date = month_labels.get(selected_index, None)
 
@@ -346,19 +346,19 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     filter_end_date = pd.to_datetime(f'{selected_date}-01') + pd.DateOffset(months=1)
     filter_condition = f'(Date < "{filter_end_date}")'
 
-    # Apply promotion filter
-    if promo_filter:
-        filter_condition += ' & (is_promotion == True)'
+    # # Apply promotion filter
+    # if promo_filter:
+    #     filter_condition += ' & (is_promotion == True)'
 
-    # Apply fulfillment filter if selection is not Both
-    if fulfillment_filter != "Both":  # If not "Both", filter accordingly
-        filter_condition += f' & (Fulfilment == "{fulfillment_filter}")'
+    # # Apply fulfillment filter if selection is not Both
+    # if fulfillment_filter != "Both":  # If not "Both", filter accordingly
+    #     filter_condition += f' & (Fulfilment == "{fulfillment_filter}")'
 
-    # Apply order status filter
-    if selected_statuses:
-        filter_statuses = [item for key, values in status_mapping.items() for item in values if key in selected_statuses]
-        filter_statuses_str = ', '.join([f'"{status}"' for status in filter_statuses])
-        filter_condition += f' & (Status in [{filter_statuses_str}])'
+    # # Apply order status filter
+    # if selected_statuses:
+    #     filter_statuses = [item for key, values in status_mapping.items() for item in values if key in selected_statuses]
+    #     filter_statuses_str = ', '.join([f'"{status}"' for status in filter_statuses])
+    #     filter_condition += f' & (Status in [{filter_statuses_str}])'
 
     # if signal_data and 'state' in signal_data['selected_states']:
     #     state = signal_data['selected_states']['state'][0]
@@ -369,7 +369,7 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     filtered_df = df.query(filter_condition)
     print(f'query columns are {filtered_df.columns}')
 
-    return f"Showing {len(filtered_df):,.0f} records up to {selected_date}.", filter_condition
+    return filter_condition
 
 @app.callback(
     Output("sales", "spec"),
