@@ -45,9 +45,10 @@ def import_data():
 
 df, india = import_data()
 
+select_states = alt.selection_point(fields=["state"], name="select_states")
 map = alt.Chart(india, width='container').mark_geoshape(stroke='grey').encode(
         ).add_params(
-            alt.selection_point(fields=["state"], name="selected_states")
+            select_states
         ).to_dict(format='vega')
 
 # Initiatlize the app
@@ -57,7 +58,7 @@ server = app.server
 # Layout
 app.layout = dbc.Container([
     # dcc.Dropdown(id='state', value='Delhi', options=df['state'].unique()),
-    dvc.Vega(id='map', spec=map, signalsToObserve=['selected_states']),
+    dvc.Vega(id='map', spec=map, signalsToObserve=['select_states']),
     dvc.Vega(id='sales', spec={}),
 ])
 
