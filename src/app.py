@@ -114,7 +114,6 @@ metrics = dbc.Row([
 filters = None # placeholder for filters
 
 # Charts
-select = alt.selection_point(fields=["state"], name="selected_states")
 state_sales = df.groupby('state')['Amount'].sum().reset_index()
 map = alt.Chart(india, width='container').mark_geoshape(stroke='grey').encode(
             color=alt.Color("Amount:Q", legend=None),
@@ -123,7 +122,7 @@ map = alt.Chart(india, width='container').mark_geoshape(stroke='grey').encode(
             lookup="state",
             from_=alt.LookupData(state_sales, "state", ["Amount"])
         ).add_params(
-            select
+            alt.selection_point(fields=["state"], name="selected_states")
         ).to_dict(format='vega')
 
 # Visuals
@@ -152,6 +151,7 @@ app.layout = dbc.Container([
     # prevent_initial_call=True
 )
 def create_sales_chart(signal_data):
+    print(signal_data)
     if not signal_data or not signal_data['selected_states']:
         # If no state selected, use the entire data set
         selection = df
@@ -172,6 +172,7 @@ def create_sales_chart(signal_data):
     # prevent_initial_call=True
 )
 def create_product_chart(signal_data):
+    print(signal_data)
     if not signal_data or not signal_data['selected_states']:
         # If no state selected, use the entire data set
         selection = df.groupby('Category')['Amount'].sum().reset_index()
