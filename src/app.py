@@ -337,6 +337,7 @@ app.layout = dbc.Container([
     Input("map", "signalData"),
 )
 def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selected_statuses, signal_data):
+    print(f'signal_data is {signal_data}')
     # Convert slider index to corresponding year-month
     selected_date = month_labels.get(selected_index, None)
 
@@ -376,17 +377,15 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     # prevent_initial_call=True
 )
 def create_sales_chart(query):
-    try:
-        selection = df.query(query)
-        sales = alt.Chart(selection, width='container', title="Monthly Sales"
-                          ).mark_line().encode(
-                            x=alt.X('yearmonth(Date):T', title='Month'),
-                            y=alt.Y('sum(Amount):Q', title='Total Amount')
-                        ).to_dict(format='vega')
-        return sales
-    except Exception as e:
-        print(f"Error in create_sales_chart: {e}")
-        return alt.Chart(pd.DataFrame()).mark_text(text=f"Error: {e}").to_dict(format='vega')
+    print(f'query is {query}')
+    selection = df.query(query)
+    sales = alt.Chart(selection, width='container', title="Monthly Sales"
+                      ).mark_line().encode(
+                        x=alt.X('yearmonth(Date):T', title='Month'),
+                        y=alt.Y('sum(Amount):Q', title='Total Amount')
+                    ).to_dict(format='vega')
+
+    return sales
 
 @callback(
     Output("product", "spec"),
