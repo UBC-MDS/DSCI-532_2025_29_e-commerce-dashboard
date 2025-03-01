@@ -24,7 +24,7 @@ SOFTWARE.
 
 ## Creative Commons Attribution 4.0 International (CC BY 4.0)
 
-All the reports located in the `reports/` directory (e.g., `m1_proposal.md`) is licensed under the **Creative Commons Attribution 4.0 International License (CC BY 4.0)**. This license allows you to share and adapt the report for any purpose, even commercially, provided you give appropriate credit to the authors.
+All the reports and images located in `reports/` and `img/` directories (e.g., `m1_proposal.md`) are licensed under the **Creative Commons Attribution 4.0 International License (CC BY 4.0)**. This license allows you to share and adapt the report for any purpose, even commercially, provided you give appropriate credit to the authors.
 
 You are free to:
 - **Share**: copy and redistribute the material in any medium or format for any purpose, even commercially.

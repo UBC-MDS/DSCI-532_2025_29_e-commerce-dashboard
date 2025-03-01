@@ -109,6 +109,6 @@ Jenson Chang, Shashank Hosahalli Shivamurthy, Sienko Ikhabi, Yajing Liu
 
 This project is dual-licensed:
 - Source code: MIT License
-- Reports in `reports/`: Creative Commons Attribution 4.0 International (CC BY 4.0)
+- Reports in `reports/` and Images in `img/`: Creative Commons Attribution 4.0 International (CC BY 4.0)
 
 See [LICENSE.md](LICENSE.md) for details.
