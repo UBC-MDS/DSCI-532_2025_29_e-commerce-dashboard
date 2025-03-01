@@ -8,7 +8,7 @@ import geopandas as gpd
 alt.data_transformers.enable('vegafusion')
 
 def import_data():
-    df = pd.read_csv('data/raw/amazon_sample.zip')
+    df = pd.read_csv('data/raw/amazon_sample.csv', nrows=1000)
     df = df.iloc[:, :-1]  # Drop last column
     df.rename(columns={'ship-state' : 'state'}, inplace=True)
     df['state'] = df['state'].str.title()
@@ -39,6 +39,7 @@ def import_data():
     # print("States in df but not in india:", missing_in_india)
     # print("States in india but not in df:", missing_in_ship)
 
+    print(df.columns)
     return df, india
 
 # Initiatlize the app
