@@ -41,7 +41,6 @@ def import_data():
     # print("States in df but not in india:", missing_in_india)
     # print("States in india but not in df:", missing_in_ship)
 
-    print(df.columns)
     return df, india
 
 df, india = import_data()
@@ -69,12 +68,11 @@ app.layout = dbc.Container([
 )
 def create_sales_chart(signal_data):
     print(signal_data)
-    if not signal_data or not signal_data['selected_states']:
-        # If no state selected, use the entire data set
-        selection = df
-    else:
+    if signal_data and 'state' in signal_data['selected_states']:
         state = signal_data['selected_states']['state'][0]
         selection = df[df['state'] == state]
+    else:
+        selection = df
 
     sales = alt.Chart(selection, width='container').mark_line().encode(
                 x=alt.X('yearmonth(Date):T', title='Month'),
