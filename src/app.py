@@ -18,6 +18,7 @@ def import_data():
     df['state'] = df['state'].str.title()
     df['state'].dropna(inplace=True)
     df['Date'] = pd.to_datetime(df["Date"], format="%m-%d-%y", errors="coerce")
+    df['is_promotion'] = df['promotion-ids'].notna() # will capture both NA and empty string
 
     url = 'https://naciscdn.org/naturalearth/50m/cultural/ne_50m_admin_1_states_provinces.zip'
     india = gpd.read_file(url).query("iso_a2 == 'IN'")
@@ -38,19 +39,20 @@ def import_data():
 
 df, india = import_data()
 
-# Create Plotly map
-state_sales = df.groupby('state')['Amount'].sum().reset_index()
-fig = px.choropleth(
-    state_sales,
-    geojson=india.__geo_interface__,
-    locations='state',
-    featureidkey="properties.state",
-    color='Amount',
-    hover_name='state',
-    hover_data=['Amount'],
-    title="Sales by State and Territories"
+# Toggle for promotions
+promotion_toggle = dbc.Row(
+    [
+        dbc.Col(width="auto"),
+        dbc.Col(
+            dbc.Switch(
+                id="promotion-toggle",
+                value=False,  # Default is OFF (showing orders without promotions)
+            ),
+            width="auto"
+        ),
+    ],
+    className="mb-3"
 )
-fig.update_geos(fitbounds="locations", visible=False)
 
 # Initiatlize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -58,23 +60,23 @@ server = app.server
 
 # Layout
 app.layout = dbc.Container([
-    dcc.Graph(id='map', figure=fig),
+    html.Label("Promotions Only:", className="fw-bold mt-3", style={"color": "#34495e"}),
+            dbc.Switch(id="promotion-toggle", value=False, className="ms-2"),
+            html.Hr(),
     dvc.Vega(id='sales', spec={}),
 ])
 
 # Server side callbacks/reactivity
 @callback(
     Output('sales', 'spec'),
-    Input('map', 'clickData'),
+    Input("promotion-toggle", "value"),
 )
-def create_sales_chart(click_data):
-    print('Creating sales chart')
-    if click_data and 'points' in click_data:
-        state = click_data['points'][0]['location']
-        selection = df[df['state'] == state]
+def create_sales_chart(promo_filter):
+    # Apply promotion filter
+    if promo_filter:
+        selection = df.query('(is_promotion == True)')
     else:
-        selection = df
-
+        selection = df.query('(is_promotion == False)')
     sales = alt.Chart(selection, width='container').mark_line().encode(
                 x=alt.X('yearmonth(Date):T', title='Month'),
                 y=alt.Y('sum(Amount):Q', title='Total Amount')
