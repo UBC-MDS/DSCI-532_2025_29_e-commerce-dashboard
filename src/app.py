@@ -46,24 +46,36 @@ def import_data():
 
 df, india = import_data()
 
+map = alt.Chart(india, width='container').mark_geoshape(stroke='grey').encode(
+        ).add_params(
+            alt.selection_point(fields=["state"], name="selected_states")
+        ).to_dict(format='vega')
+
 # Initiatlize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
 # Layout
 app.layout = dbc.Container([
-    dcc.Dropdown(id='state', value='Delhi', options=df['state'].unique()),
-    dvc.Vega(id='sales', spec={}, signalsToObserve=['select_region']),
-    # dcc.Markdown(id='chart-selection')
-    html.Div(id='chart-selection')
+    # dcc.Dropdown(id='state', value='Delhi', options=df['state'].unique()),
+    dvc.Vega(id='map', spec=map, signalsToObserve=['selected_states']),
+    dvc.Vega(id='sales', spec={}),
 ])
 
 # Server side callbacks/reactivity
 @callback(
     Output('sales', 'spec'),
-    Input('state', 'value'),
+    Input('map', 'signalData'),
 )
-def create_sales_chart(state):
+def create_sales_chart(signal_data):
+    print(signal_data)
+    if not signal_data or not signal_data['selected_states']:
+        # If no state selected, use the entire data set
+        selection = df
+    else:
+        state = signal_data['selected_states']['state'][0]
+        selection = df[df['state'] == state]
+    print(state)
     selection = df[df['state'] == state]
     sales = alt.Chart(selection, width='container').mark_line().encode(
                 x=alt.X('yearmonth(Date):T', title='Month'),
