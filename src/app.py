@@ -341,7 +341,6 @@ visuals = dbc.Row([
 
 # Layout
 app.layout = dbc.Container([
-    dcc.Store(id="filter_condition", data={}),
     # Title
     dbc.Row([
         dbc.Col(title, width=12)
