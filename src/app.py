@@ -334,7 +334,7 @@ visuals = dbc.Row([
                 dbc.Row(dvc.Vega(id='map', spec=map, signalsToObserve=['selected_states'])),
                 dbc.Row([
                     dbc.Col(dvc.Vega(id='sales', spec=sales)),
-                    dbc.Col(dvc.Vega(id='product', spec={}))
+                    # dbc.Col(dvc.Vega(id='product', spec={}))
                 ]),
             ], 'charts'),
         ], id='visuals')
@@ -358,39 +358,46 @@ app.layout = dbc.Container([
 ], fluid=True)
 
 # Server side callbacks/reactivity
-@app.callback(
-    Output("filtered-data", "children"),  # Debugging output
-    Input("date-slider", "value"),
-    Input("promotion-toggle", "value"),
-    Input("fulfillment-radio", "value"),
-    Input("status-checkbox", "value"),
-    Input("map", "signalData")
-)
-def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selected_statuses, signal_data):
-    print(f'signal_data is {signal_data}')
+# @app.callback(
+#     Output("filtered-data", "children"),  # Debugging output
+#     Input("date-slider", "value"),
+#     Input("promotion-toggle", "value"),
+#     Input("fulfillment-radio", "value"),
+#     Input("status-checkbox", "value"),
+#     Input("map", "signalData")
+# )
+# def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selected_statuses, signal_data):
+#     print(f'signal_data is {signal_data}')
 
-    filter_condition = get_query(selected_index, promo_filter, fulfillment_filter, selected_statuses, signal_data)
-    selected_date = month_labels.get(selected_index, None)
+#     filter_condition = get_query(selected_index, promo_filter, fulfillment_filter, selected_statuses, signal_data)
+#     selected_date = month_labels.get(selected_index, None)
 
-    # Store the filtered dataset
-    print(f'query is {filter_condition}')
-    filtered_df = df.query(filter_condition)
-    print(f'query columns are {filtered_df.columns}')
+#     # Store the filtered dataset
+#     print(f'query is {filter_condition}')
+#     filtered_df = df.query(filter_condition)
+#     print(f'query columns are {filtered_df.columns}')
 
-    return f"Showing {len(filtered_df):,.0f} records up to {selected_date}."
+#     return f"Showing {len(filtered_df):,.0f} records up to {selected_date}."
 
 @app.callback(
     Output("sales", "spec"),
-    Input("date-slider", "value"),
-    Input("promotion-toggle", "value"),
-    Input("fulfillment-radio", "value"),
-    Input("status-checkbox", "value"),
+    # Input("date-slider", "value"),
+    # Input("promotion-toggle", "value"),
+    # Input("fulfillment-radio", "value"),
+    # Input("status-checkbox", "value"),
     Input("map", "signalData")
 )
-def create_sales_chart(selected_index, promo_filter, fulfillment_filter, selected_statuses, signal_data):
+# def create_sales_chart(selected_index, promo_filter, fulfillment_filter, selected_statuses, signal_data):
+def update_sales_chart(signal_data):
     print('Creating sales chart')
-    filter_condition = get_query(selected_index, promo_filter, fulfillment_filter, selected_statuses, signal_data)
-    selection = df.query(filter_condition)
+    # filter_condition = get_query(selected_index, promo_filter, fulfillment_filter, selected_statuses, signal_data)
+    # selection = df.query(filter_condition)
+    if not signal_data or not signal_data['selected_states']:
+        # If no state selected, use the entire data set
+        selection = df
+    else:
+        state = signal_data['selected_states']['state'][0]
+        selection = df[df['state'] == state]
     sales = alt.Chart(selection, width='container', title="Monthly Sales"
                       ).mark_line().encode(
                         x=alt.X('yearmonth(Date):T', title='Month'),
@@ -404,7 +411,7 @@ def create_sales_chart(selected_index, promo_filter, fulfillment_filter, selecte
 #     Input("filter_condition", "data")
 #     # prevent_initial_call=True
 # )
-# def create_product_chart(query):
+# def update_product_chart(query):
 #     selection = df.query(query)
 #     selection = selection.groupby('Category')['Amount'].sum().reset_index()
     
