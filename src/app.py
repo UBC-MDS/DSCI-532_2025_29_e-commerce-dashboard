@@ -4,6 +4,7 @@ import dash_vega_components as dvc
 import pandas as pd
 import altair as alt
 import geopandas as gpd
+import plotly.express as px
 
 alt.data_transformers.enable('vegafusion')
 
@@ -16,7 +17,7 @@ def import_data():
     df.rename(columns={'ship-state' : 'state'}, inplace=True)
     df['state'] = df['state'].str.title()
     df['state'].dropna(inplace=True)
-    df['Date'] = pd.to_datetime(df['Date'])
+    df['Date'] = pd.to_datetime(df["Date"], format="%m-%d-%y", errors="coerce")
 
     url = 'https://naciscdn.org/naturalearth/50m/cultural/ne_50m_admin_1_states_provinces.zip'
     india = gpd.read_file(url).query("iso_a2 == 'IN'")
@@ -33,23 +34,23 @@ def import_data():
     # Rename values in df
     df['state'] = df['state'].replace(state_mapping)
 
-    # ship_states = set(df['state'].unique())
-    # india_states = set(india['state'].unique())
-    # missing_in_india = ship_states - india_states
-    # missing_in_ship = india_states - ship_states
-
-    # print("States in df but not in india:", missing_in_india)
-    # print("States in india but not in df:", missing_in_ship)
-
     return df, india
 
 df, india = import_data()
 
-select_states = alt.selection_point(fields=["state"], name="select_states")
-map = alt.Chart(india, width='container').mark_geoshape(stroke='grey').encode(
-        ).add_params(
-            select_states
-        ).to_dict(format='vega')
+# Create Plotly map
+state_sales = df.groupby('state')['Amount'].sum().reset_index()
+fig = px.choropleth(
+    state_sales,
+    geojson=india.__geo_interface__,
+    locations='state',
+    featureidkey="properties.state",
+    color='Amount',
+    hover_name='state',
+    hover_data=['Amount'],
+    title="Sales by State and Territories"
+)
+fig.update_geos(fitbounds="locations", visible=False)
 
 # Initiatlize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
@@ -57,20 +58,22 @@ server = app.server
 
 # Layout
 app.layout = dbc.Container([
-    # dcc.Dropdown(id='state', value='Delhi', options=df['state'].unique()),
-    dvc.Vega(id='map', spec=map, signalsToObserve=['select_states']),
+    dcc.Graph(id='map', figure=fig),
     dvc.Vega(id='sales', spec={}),
 ])
 
 # Server side callbacks/reactivity
 @callback(
     Output('sales', 'spec'),
-    Input('map', 'signalData'),
+    Input('map', 'clickData'),
 )
-def create_sales_chart(signal_data):
-    print(signal_data)
-    state = 'Delhi'
-    selection = df[df['state'] == state]
+def create_sales_chart(click_data):
+    print('Creating sales chart')
+    if click_data and 'points' in click_data:
+        state = click_data['points'][0]['location']
+        selection = df[df['state'] == state]
+    else:
+        selection = df
 
     sales = alt.Chart(selection, width='container').mark_line().encode(
                 x=alt.X('yearmonth(Date):T', title='Month'),
