@@ -302,8 +302,8 @@ visuals = dbc.Row([
             dbc.Col([
                 dbc.Row(dvc.Vega(id='map', spec=map, signalsToObserve=['selected_states'])),
                 dbc.Row([
-                    dbc.Col(dvc.Vega(id='sales', spec={})),
-                    dbc.Col(dvc.Vega(id='product', spec={}))
+                    # dbc.Col(dvc.Vega(id='sales', spec={})),
+                    # dbc.Col(dvc.Vega(id='product', spec={}))
                 ]),
             ], 'charts'),
         ], id='visuals')
