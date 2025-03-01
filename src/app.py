@@ -380,6 +380,7 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 def create_sales_chart(query):
     print('Creating sales chart')
     selection = df.query(query)
+    selection = df
     sales = alt.Chart(selection, width='container', title="Monthly Sales"
                       ).mark_line().encode(
                         x=alt.X('yearmonth(Date):T', title='Month'),
