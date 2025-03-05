@@ -31,7 +31,7 @@ def get_latest_commit_date():
     """
     try:
         repo = Repo(".")
-        main_branch = repo.heads.main
+        main_branch = repo.branches['main']
         latest_commit = main_branch.commit
         commit_date = datetime.fromtimestamp(latest_commit.committed_date)
         return commit_date.strftime("%B %d, %Y")
