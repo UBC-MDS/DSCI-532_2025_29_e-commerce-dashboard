@@ -5,6 +5,15 @@ from datetime import datetime
 
 # Function to format numeric values
 def format_large_num(value):
+    """
+    Format large numeric values with appropriate suffixes (K, M, B, T).
+    
+    Args:
+        value (float): Numeric value to format.
+    
+    Returns:
+        str: Formatted numeric value with suffix.
+    """
     value = float('{:.3g}'.format(value))
     magnitude = 0
     while abs(value) >= 1000:
@@ -12,21 +21,44 @@ def format_large_num(value):
         value /= 1000.0
     return '{}{}'.format('{:f}'.format(value).rstrip('0').rstrip('.'), ['', 'K', 'M', 'B', 'T'][magnitude])
 
-# Function to get the latest commit date
+# Function to get the latest commit date on the main branch
 def get_latest_commit_date():
-    try: #included to handle any error gracefully
-        repo = Repo(".") 
-        latest_commit = repo.head.commit
+    """
+    Get the date of the latest commit on the main branch in the repository.
+    
+    Returns:
+        str: Latest commit date in "Month Day, Year" format.
+    """
+    try:
+        repo = Repo(".")
+        main_branch = repo.heads.main
+        latest_commit = main_branch.commit
         commit_date = datetime.fromtimestamp(latest_commit.committed_date)
-        return commit_date.strftime("%B %d, %Y")  
+        return commit_date.strftime("%B %d, %Y")
     except Exception as e:
         print(f"Error fetching commit date: {e}")
         return "Unknown Date"
 
 def create_title():
+    """
+    Create the title component for the dashboard.
+    
+    Returns:
+        dbc.Row: Title component.
+    """
     return dbc.Row(html.H1("Sales Dashboard"), className="bg-secondary text-black p-2 mb-4 text-center", id='title')
 
 def create_metric_1(total_revenue_current, revenue_mom_change):
+    """
+    Create the first metric card for total revenue.
+    
+    Args:
+        total_revenue_current (float): Current total revenue.
+        revenue_mom_change (float): Month-over-month change in revenue.
+    
+    Returns:
+        dbc.Card: Metric card for total revenue.
+    """
     return dbc.Card(
         dbc.CardBody(
             [
@@ -40,6 +72,16 @@ def create_metric_1(total_revenue_current, revenue_mom_change):
     )
 
 def create_metric_2(total_quantity_current, quantity_mom_change):
+    """
+    Create the second metric card for total quantity sold.
+    
+    Args:
+        total_quantity_current (float): Current total quantity sold.
+        quantity_mom_change (float): Month-over-month change in quantity sold.
+    
+    Returns:
+        dbc.Card: Metric card for total quantity sold.
+    """
     return dbc.Card(
         dbc.CardBody(
             [
@@ -53,6 +95,16 @@ def create_metric_2(total_quantity_current, quantity_mom_change):
     )
 
 def create_metric_3(completion_rate_current, completion_rate_mom_change):
+    """
+    Create the third metric card for order completion rate.
+    
+    Args:
+        completion_rate_current (float): Current order completion rate.
+        completion_rate_mom_change (float): Month-over-month change in completion rate.
+    
+    Returns:
+        dbc.Card: Metric card for order completion rate.
+    """
     return dbc.Card(
         dbc.CardBody(
             [
@@ -66,7 +118,12 @@ def create_metric_3(completion_rate_current, completion_rate_mom_change):
     )
 
 def create_footer():
-    # Get the dynamic date
+    """
+    Create the footer component for the dashboard.
+    
+    Returns:
+        dbc.Row: Footer component.
+    """
     footer_date = get_latest_commit_date()
 
     return dbc.Row(
@@ -82,6 +139,15 @@ def create_footer():
     )
 
 def create_date_slider(month_labels):
+    """
+    Create the date slider component for the dashboard.
+    
+    Args:
+        month_labels (dict): Mapping of month labels for the date slider.
+    
+    Returns:
+        dcc.Slider: Date slider component.
+    """
     return dcc.Slider(
         id="date-slider",
         min=0,
@@ -93,6 +159,12 @@ def create_date_slider(month_labels):
     )
 
 def create_promotion_toggle():
+    """
+    Create the promotion toggle switch component for the dashboard.
+    
+    Returns:
+        dbc.Row: Promotion toggle switch component.
+    """
     return dbc.Row(
         [
             dbc.Col(width="auto"),
@@ -108,6 +180,12 @@ def create_promotion_toggle():
     )
 
 def create_fulfillment_radio():
+    """
+    Create the fulfillment radio button component for the dashboard.
+    
+    Returns:
+        dbc.Col: Fulfillment radio button component.
+    """
     return dbc.Col([
         dbc.RadioItems(
             id="fulfillment-radio",
@@ -123,6 +201,15 @@ def create_fulfillment_radio():
     ], width=3)
 
 def create_status_checkbox(status_mapping):
+    """
+    Create the status checkbox component for the dashboard.
+    
+    Args:
+        status_mapping (dict): Mapping of order statuses.
+    
+    Returns:
+        dbc.Col: Status checkbox component.
+    """
     return dbc.Col([
         dcc.Checklist(
             id="status-checkbox",

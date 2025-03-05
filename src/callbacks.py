@@ -14,6 +14,19 @@ from app import df, month_labels, status_mapping, india
     Input("map", "clickData"),
 )
 def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selected_statuses, click_data):
+    """
+    Update the filtered data based on user inputs.
+
+    Args:
+        selected_index (int): Selected index from the date slider.
+        promo_filter (bool): Promotion filter toggle value.
+        fulfillment_filter (str): Selected fulfillment type.
+        selected_statuses (list): List of selected order statuses.
+        click_data (dict): Data from map click event.
+
+    Returns:
+        tuple: filtering message and filter condition.
+    """
     # Convert slider index to corresponding year-month
     selected_date = month_labels.get(selected_index, None)
 
@@ -53,6 +66,16 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     Input("map", "clickData")  # Add clickData input to get the selected state
 )
 def create_map(query, click_data):
+    """
+    Create the map visualization based on the filtered data.
+
+    Args:
+        query (str): Filter condition query.
+        click_data (dict): Data from map click event.
+
+    Returns:
+        plotly.graph_objects.Figure: Map figure.
+    """
     states = df['state'].unique()
 
     # Remove the state filter condition from the query
@@ -104,6 +127,15 @@ def create_map(query, click_data):
     # prevent_initial_call=True
 )
 def create_sales_chart(query):
+    """
+    Create the sales chart based on the filtered data.
+
+    Args:
+        query (str): Filter condition query.
+
+    Returns:
+        plotly.graph_objects.Figure: Sales chart figure.
+    """
     try:
         selection = df.query(query)
         # Group by year_month and sum the Amount
@@ -133,6 +165,15 @@ def create_sales_chart(query):
     # prevent_initial_call=True
 )
 def create_product_chart(query):
+    """
+    Create the product chart based on the filtered data.
+
+    Args:
+        query (str): Filter condition query.
+
+    Returns:
+        plotly.graph_objects.Figure: Product chart figure.
+    """
     try:
         selection = df.query(query)
         selection = selection.groupby('Category')['Amount'].sum().reset_index()

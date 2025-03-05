@@ -2,8 +2,17 @@ import pandas as pd
 import geopandas as gpd
 
 # Import sales data for dashboard
-def import_data():
-    df = pd.read_csv('data/raw/amazon_sample.zip', nrows=1000)
+def import_data(url):
+    """
+    Import and preprocess sales data from a CSV file.
+
+    Args:
+        url (str): URL or file path to the CSV file.
+
+    Returns:
+        pd.DataFrame: Preprocessed sales data.
+    """
+    df = pd.read_csv(url, nrows=1000)
     df = df.iloc[:, :-1]  # Drop last column
     df.rename(columns={'ship-state': 'state'}, inplace=True)
     df['state'] = df['state'].str.title()
@@ -30,8 +39,16 @@ def import_data():
     return df
 
 # Import geojson file for India
-def import_geojson():
-    url = 'https://naciscdn.org/naturalearth/50m/cultural/ne_50m_admin_1_states_provinces.zip'
+def import_geojson(url):
+    """
+    Import geojson data for India.
+
+    Args:
+        url (str): URL or file path to the geojson file.
+
+    Returns:
+        gpd.GeoDataFrame: GeoDataFrame containing geojson data for India.
+    """
     india = gpd.read_file(url).query("iso_a2 == 'IN'")
     india.rename(columns={'name': 'state'}, inplace=True)
 
@@ -39,6 +56,15 @@ def import_geojson():
 
 # Preprocess data
 def preprocess_data(df):
+    """
+    Preprocess sales data to compute various metrics and mappings.
+
+    Args:
+        df (pd.DataFrame): Preprocessed sales data.
+
+    Returns:
+        dict: Dictionary containing computed metrics and mappings.
+    """
     status_mapping = {
         'Cancelled': ['Cancelled'],
         'Pending': ['Pending', 'Pending - Waiting for Pick Up', 'Shipping'],
