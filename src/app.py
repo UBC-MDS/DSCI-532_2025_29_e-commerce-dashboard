@@ -1,8 +1,7 @@
 import dash_bootstrap_components as dbc
-import callbacks
 from dash import Dash, html, dcc
-from data import import_data, import_geojson, preprocess_data
-from components import create_title, create_metric_1, create_metric_2, create_metric_3, create_footer, create_date_slider, create_promotion_toggle, create_fulfillment_radio, create_status_checkbox
+from .data import import_data, import_geojson, preprocess_data
+from .components import create_title, create_metric_1, create_metric_2, create_metric_3, create_footer, create_date_slider, create_promotion_toggle, create_fulfillment_radio, create_status_checkbox
 
 # Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.YETI])
@@ -104,6 +103,9 @@ app.layout = dbc.Container([
     ], align="start", className="mb-4"), 
     footer
 ], fluid=True)
+
+# Import callbacks to register them with the app
+from . import callbacks
 
 # Run the app/dashboard
 if __name__ == '__main__':

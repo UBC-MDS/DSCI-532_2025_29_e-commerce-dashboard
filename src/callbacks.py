@@ -1,8 +1,8 @@
-from dash import Input, Output, callback
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from app import df, month_labels, status_mapping, india
+from dash import Input, Output, callback
+from .app import df, month_labels, status_mapping, india
 
 @callback(
     Output("filtered-data", "children"),  # Debugging output
