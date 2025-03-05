@@ -77,7 +77,9 @@ filters = dbc.Col([
 # Visuals
 visuals = dbc.Row([
             dbc.Row([
-                dcc.Graph(id='map', figure={})]),
+                dbc.Col([dcc.Graph(id='map', figure={})]),
+                dbc.Col([dcc.Graph(id='state_summary', figure={})])
+                ]),
             dbc.Row([
                 dbc.Col([dcc.Graph(id='sales', figure={})]),
                 dbc.Col([dcc.Graph(id='product', figure={})])
