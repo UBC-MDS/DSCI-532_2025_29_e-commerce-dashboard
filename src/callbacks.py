@@ -60,6 +60,68 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 
     return f"Showing {len(filtered_df):,.0f} records up to {selected_date}.", filter_condition
 
+from dash import html
+import dash_bootstrap_components as dbc
+
+@callback(
+    Output("metric-1", "children"),  # Revenue metric
+    Output("metric-2", "children"),  # Quantity metric
+    Output("metric-3", "children"),  # Completion rate metric
+    Input("date-slider", "value"),  # Only updates based on date-slider
+)
+def update_metrics(selected_index):
+    """
+    Update the metric cards dynamically based on the selected month.
+
+    Args:
+        selected_index (int): Selected index from the date slider.
+
+    Returns:
+        tuple: Updated metric contents for revenue, quantity, and completion rate.
+    """
+    # Convert slider index to corresponding year-month
+    selected_date = month_labels.get(selected_index, None)
+
+    if not selected_date:
+        return dbc.CardBody("N/A"), dbc.CardBody("N/A"), dbc.CardBody("N/A")
+
+    # Filter dataset for selected month
+    filtered_df = df[df["year_month"] == selected_date]
+
+    # Compute revenue, quantity, and completion rate for selected month
+    revenue_selected = filtered_df["Amount"].sum()
+    quantity_selected = filtered_df["Qty"].sum()
+
+    # Compute completion rate
+    completed_status = ["Shipped", "Shipped - Delivered to Buyer", "Shipped - Picked Up", "Shipped - Out for Delivery"]
+    completed_orders = filtered_df[filtered_df["Status"].isin(completed_status)]
+    completion_rate_selected = (len(completed_orders) / len(filtered_df)) * 100 if len(filtered_df) > 0 else 0
+
+    # **Wrap metrics inside styled dbc.CardBody()**
+    metric_1_content = dbc.CardBody([
+        html.H3("Revenue", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
+        html.H1(f"${revenue_selected:,.2f}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
+        html.Small(f"Compared to previous month: {revenue_selected:+.1f}%", 
+                   className="card-text text-muted", style={"font-size": "14px"})
+    ])
+
+    metric_2_content = dbc.CardBody([
+        html.H3("Quantity Sold", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
+        html.H1(f"{quantity_selected:,.0f}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
+        html.Small(f"Compared to previous month: {quantity_selected:+.1f}%", 
+                   className="card-text text-muted", style={"font-size": "14px"})
+    ])
+
+    metric_3_content = dbc.CardBody([
+        html.H3("Completed Orders", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
+        html.H1(f"{completion_rate_selected:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
+        html.Small(f"Compared to previous month: {completion_rate_selected:+.1f}%", 
+                   className="card-text text-muted", style={"font-size": "14px"})
+    ])
+
+    return metric_1_content, metric_2_content, metric_3_content
+
+
 @callback(
     Output("map", "figure"),
     Input("filter_condition", "data"),
