@@ -77,12 +77,12 @@ filters = dbc.Col([
 # Visuals
 visuals = dbc.Row([
             dbc.Row([
-                dbc.Col([dcc.Graph(id='map', figure={})]),
-                dbc.Col([dcc.Graph(id='state_summary', figure={})])
+                dbc.Col([dcc.Graph(id='map', figure={})], style={"max-width": "50%"}),
+                dbc.Col([dcc.Graph(id='state_summary', figure={})], style={"max-width": "50%"})
                 ]),
             dbc.Row([
-                dbc.Col([dcc.Graph(id='sales', figure={})]),
-                dbc.Col([dcc.Graph(id='product', figure={})])
+                dbc.Col([dcc.Graph(id='sales', figure={})], style={"max-width": "50%"}),
+                dbc.Col([dcc.Graph(id='product', figure={})], style={"max-width": "50%"})
             ])
         ], id='visuals')
 
@@ -111,4 +111,4 @@ from . import callbacks
 
 # Run the app/dashboard
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)

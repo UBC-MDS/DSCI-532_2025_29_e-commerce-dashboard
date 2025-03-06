@@ -91,32 +91,47 @@ def create_map(query, click_data):
     # Add a column to indicate whether the state is selected
     state_sales['selected'] = state_sales['state'].apply(lambda x: x == click_data['points'][0]['location'] if click_data and 'points' in click_data else False)
 
+    # Rename column name for tooltip consistency
+    state_sales = state_sales.rename(columns={'state': 'State'})
+
     fig = px.choropleth(
         state_sales,
         geojson=india.__geo_interface__,
-        locations='state',
+        locations='State',
         featureidkey="properties.state",
         color='Amount',
-        hover_name='state',
+        hover_name='State',
         hover_data=['Amount'],
         title="Sales by State and Territories",
         color_continuous_scale=px.colors.sequential.Bluyl  # Change the color theme
     )
 
     # Highlight the selected state
-    fig.update_traces(marker_line_width=state_sales['selected'].apply(lambda x: 3 if x else 0),
-                      marker_line_color='white')
+    fig.update_traces(marker_line_width=state_sales['selected'].apply(lambda x: 3 if x else 1),
+                      marker_line_color=state_sales['selected'].apply(lambda x: 'red' if x else 'black'))
 
     fig.update_geos(
-        fitbounds="locations",
+        projection_type="natural earth",
         visible=False,
-        projection_scale=5,  # Adjust this value to zoom in or out
-        center={"lat": 20.5937, "lon": 78.9629}  # Center the map on India
+        projection_scale=1,  # Adjust this value to zoom in or out
+        center={"lat": 20.5937, "lon": 78.9629},  # Center the map on India
+        lonaxis=dict(range=[50, 105]),
+        lataxis=dict(range=[5, 35])
     )
+    
     fig.update_layout(
-        coloraxis_showscale=False,
         modebar=dict(remove=['select', 'lasso2d']),
-        margin={"r":0,"t":50,"l":0,"b":0}  # Adjust margins to make the map wider
+        margin={"r":0,"t":50,"l":0,"b":0},  # Adjust margins to make the map wider
+        coloraxis_colorbar=dict(
+            x=0.03,  # Position the color scale on the left side
+            y=0.5,
+            xanchor='left',
+            yanchor='middle'
+        )
+    )
+
+    fig.update_traces(
+        hovertemplate="<b>%{hovertext}</b><br>" + "Sales: ₹%{customdata[0]:,}"  # Display amount in whole numbers with comma separator
     )
 
     return fig
