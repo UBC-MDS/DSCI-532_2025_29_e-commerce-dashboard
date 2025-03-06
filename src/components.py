@@ -48,14 +48,31 @@ def create_title():
     """
     return dbc.Row(html.H1("Sales Dashboard"), className="bg-secondary text-black p-2 mb-4 text-center", id='title')
 
+def format_mom_change(value):
+    """
+    Format Month-over-Month (MoM) change with color and arrow indicators.
+
+    Args:
+        value (float): The month-over-month percentage change.
+
+    Returns:
+        html.Small: Styled HTML component indicating the MoM change.
+    """
+    color = "#FFA500" if value > 0 else "#87CEEB" if value < 0 else "black"  # Orange for positive, Sky Blue for negative
+    arrow = "▲" if value > 0 else "▼" if value < 0 else "▪"  # Arrows for trends
+
+    return html.Small(f" {arrow} {value:+.1f}%", 
+                      className="card-text text-muted", 
+                      style={"font-size": "14px", "color": color})
+
 def create_metric_1(total_revenue_current, revenue_mom_change):
     """
     Create the first metric card for total revenue.
-    
+
     Args:
         total_revenue_current (float): Current total revenue.
         revenue_mom_change (float): Month-over-month change in revenue.
-    
+
     Returns:
         dbc.Card: Metric card for total revenue.
     """
@@ -63,9 +80,10 @@ def create_metric_1(total_revenue_current, revenue_mom_change):
         dbc.CardBody(
             [
                 html.H3("Revenue", className="card-title", style={"font-size": "18px"}),
-                html.H1(f"${format_large_num(total_revenue_current)}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
-                html.Small(f"Compared to previous month: {revenue_mom_change:+.1%}",
-                           className="card-text text-muted", style={"font-size": "14px"})
+                html.H1(f"${format_large_num(total_revenue_current)}", className="card-text", 
+                        style={"font-size": "30px", "font-weight": "bold"}),
+                html.Small("Compared to previous month:", className="card-text text-muted", style={"font-size": "14px"}),
+                format_mom_change(revenue_mom_change)
             ]
         ),
         style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"}
@@ -74,11 +92,11 @@ def create_metric_1(total_revenue_current, revenue_mom_change):
 def create_metric_2(total_quantity_current, quantity_mom_change):
     """
     Create the second metric card for total quantity sold.
-    
+
     Args:
         total_quantity_current (float): Current total quantity sold.
         quantity_mom_change (float): Month-over-month change in quantity sold.
-    
+
     Returns:
         dbc.Card: Metric card for total quantity sold.
     """
@@ -86,9 +104,10 @@ def create_metric_2(total_quantity_current, quantity_mom_change):
         dbc.CardBody(
             [
                 html.H3("Quantity Sold", className="card-title", style={"font-size": "18px"}),
-                html.H1(f"{format_large_num(total_quantity_current)}", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
-                html.Small(f"Compared to previous month: {quantity_mom_change:+.1%}",
-                           className="card-text text-muted", style={"font-size": "14px"})
+                html.H1(f"{format_large_num(total_quantity_current)}", className="card-text", 
+                        style={"font-size": "30px", "font-weight": "bold"}),
+                html.Small("Compared to previous month:", className="card-text text-muted", style={"font-size": "14px"}),
+                format_mom_change(quantity_mom_change)
             ]
         ),
         style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"},
@@ -97,11 +116,11 @@ def create_metric_2(total_quantity_current, quantity_mom_change):
 def create_metric_3(completion_rate_current, completion_rate_mom_change):
     """
     Create the third metric card for order completion rate.
-    
+
     Args:
         completion_rate_current (float): Current order completion rate.
         completion_rate_mom_change (float): Month-over-month change in completion rate.
-    
+
     Returns:
         dbc.Card: Metric card for order completion rate.
     """
@@ -109,13 +128,15 @@ def create_metric_3(completion_rate_current, completion_rate_mom_change):
         dbc.CardBody(
             [
                 html.H3("Completed Orders", className="card-title", style={"font-size": "18px"}),
-                html.H1(f"{completion_rate_current:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold"}),
-                html.Small(f"Compared to previous month: {completion_rate_mom_change:+.1f}%",
-                           className="card-text text-muted", style={"font-size": "14px"})
+                html.H1(f"{completion_rate_current:.2f}%", className="card-text", 
+                        style={"font-size": "30px", "font-weight": "bold"}),
+                html.Small("Compared to previous month:", className="card-text text-muted", style={"font-size": "14px"}),
+                format_mom_change(completion_rate_mom_change)
             ]
         ),
         style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"},
     )
+
 
 def create_footer():
     """
@@ -213,7 +234,7 @@ def create_status_checkbox(status_mapping):
     return dbc.Col([
         dcc.Checklist(
             id="status-checkbox",
-            options=[key for key, _ in status_mapping.items()],
+            options=[{"label": f" {key}", "value": key} for key in status_mapping.keys()],
             value=["Shipped"],  # Default selection
             inline=False  # Display vertically
         )

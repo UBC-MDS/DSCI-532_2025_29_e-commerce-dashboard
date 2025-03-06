@@ -156,26 +156,32 @@ def update_metrics(selected_index, promo_filter, fulfillment_filter, selected_st
         quantity_mom_change = 0
         completion_rate_mom_change = 0
 
+    # **Set color and arrow indicators**
+    def format_mom_change(value):
+        if value > 0:
+            return html.Span(f"▲ {value:+.1f}%", style={"color": "orange", "font-weight": "bold"})
+        elif value < 0:
+            return html.Span(f"▼ {value:+.1f}%", style={"color": "skyblue", "font-weight": "bold"})
+        else:
+            return html.Span(f"{value:+.1f}%", style={"color": "gray", "font-weight": "bold"})
+
     # **Wrap metrics inside dbc.CardBody()**
     metric_1_content = dbc.CardBody([
         html.H3("Revenue", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
         html.H1(f"${revenue_selected:,.2f}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
-        html.Small(f"Compared to previous month: {revenue_mom_change:+.1f}%", 
-                   className="card-text text-muted", style={"font-size": "14px"})
+        html.Small(["Compared to previous month: ", format_mom_change(revenue_mom_change)], className="card-text text-muted", style={"font-size": "14px"})
     ])
 
     metric_2_content = dbc.CardBody([
         html.H3("Quantity Sold", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
         html.H1(f"{quantity_selected:,.0f}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
-        html.Small(f"Compared to previous month: {quantity_mom_change:+.1f}%", 
-                   className="card-text text-muted", style={"font-size": "14px"})
+        html.Small(["Compared to previous month: ", format_mom_change(quantity_mom_change)], className="card-text text-muted", style={"font-size": "14px"})
     ])
 
     metric_3_content = dbc.CardBody([
         html.H3("Completed Orders", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
         html.H1(f"{completion_rate_selected:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
-        html.Small(f"Compared to previous month: {completion_rate_mom_change:+.1f}%", 
-                   className="card-text text-muted", style={"font-size": "14px"})
+        html.Small(["Compared to previous month: ", format_mom_change(completion_rate_mom_change)], className="card-text text-muted", style={"font-size": "14px"})
     ])
 
     return metric_1_content, metric_2_content, metric_3_content
