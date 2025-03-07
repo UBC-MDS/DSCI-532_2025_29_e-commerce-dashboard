@@ -1,7 +1,7 @@
 import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc
 from .data import import_data, import_geojson, preprocess_data
-from .components import create_title, create_metric_1, create_metric_2, create_metric_3, create_footer, create_date_slider, create_promotion_toggle, create_fulfillment_radio, create_status_checkbox
+from .components import create_title, create_footer, create_filters, create_metrics, create_visuals
 
 # Initialize the app
 app = Dash(__name__, external_stylesheets=[dbc.themes.YETI])
@@ -15,35 +15,15 @@ india = import_geojson('https://naciscdn.org/naturalearth/50m/cultural/ne_50m_ad
 preprocessed_data = preprocess_data(df)
 status_mapping = preprocessed_data["status_mapping"]
 month_labels = preprocessed_data["month_labels"]
-total_revenue_current = preprocessed_data["total_revenue_current"]
-revenue_mom_change = preprocessed_data["revenue_mom_change"]
-total_quantity_current = preprocessed_data["total_quantity_current"]
-quantity_mom_change = preprocessed_data["quantity_mom_change"]
-completion_rate_current = preprocessed_data["completion_rate_current"]
-completion_rate_mom_change = preprocessed_data["completion_rate_mom_change"]
 
-# Create Ccmponents
-# Header / Title
+# Create Components
 title = create_title()
-
-# Metrics Cards using computed values
-metric_1 = create_metric_1(total_revenue_current, revenue_mom_change)
-metric_2 = create_metric_2(total_quantity_current, quantity_mom_change)
-metric_3 = create_metric_3(completion_rate_current, completion_rate_mom_change)
-
-metrics = dbc.Row([
-    dbc.Col(dbc.Card(dbc.CardBody(id="metric-1"), style={
-        "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"})),
-    dbc.Col(dbc.Card(dbc.CardBody(id="metric-2"), style={
-        "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"})),
-    dbc.Col(dbc.Card(dbc.CardBody(id="metric-3"), style={
-        "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"}))
-], id='metrics', justify="center")
-
-
-# Footer
+metrics = create_metrics()
+filters = create_filters(month_labels, status_mapping)
+visuals = create_visuals()
 footer = create_footer()
 
+<<<<<<< Updated upstream
 # Filters
 date_slider = create_date_slider(month_labels)
 promotion_toggle = create_promotion_toggle()
@@ -90,25 +70,21 @@ visuals = dbc.Row([
             ])
         ], id='visuals')
 
+=======
+>>>>>>> Stashed changes
 # Layout
 app.layout = dbc.Container([
     dcc.Store(id="filter_condition", data={}),
-    # Title
     dbc.Row([
-        dbc.Col(title, width=12)
-    ], className="mb-3"),  # Add margin-bottom for spacing
-
-    # Filters on the left, Metrics & Charts stacked in a single column
+        dbc.Col(title, width=12)], className="mb-3"),
     dbc.Row([
-        dbc.Col(filters, width=3),  # Filters stay on the left
-        dbc.Col([  # Metrics and Charts in one column to align properly
-            metrics,
-            html.Hr(),  # Horizontal line for better separation
-            visuals  # Charts and map appear directly below the metrics
-        ], width=9)
-    ], align="start", className="mb-4"), 
-    footer
-], fluid=True)
+        dbc.Col(filters, width=3),
+        dbc.Col([metrics,
+                 html.Hr(),
+                 visuals], 
+                 width=9)],align="start", className="mb-4"), 
+    footer], 
+    fluid=True)
 
 # Import callbacks to register them with the app
 from . import callbacks

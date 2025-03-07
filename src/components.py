@@ -65,79 +65,6 @@ def format_mom_change(value):
                       className="card-text text-muted", 
                       style={"font-size": "14px", "color": color})
 
-def create_metric_1(total_revenue_current, revenue_mom_change):
-    """
-    Create the first metric card for total revenue.
-
-    Args:
-        total_revenue_current (float): Current total revenue.
-        revenue_mom_change (float): Month-over-month change in revenue.
-
-    Returns:
-        dbc.Card: Metric card for total revenue.
-    """
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                html.H3("Revenue", className="card-title", style={"font-size": "18px"}),
-                html.H1(f"${format_large_num(total_revenue_current)}", className="card-text", 
-                        style={"font-size": "30px", "font-weight": "bold"}),
-                html.Small("Compared to previous month:", className="card-text text-muted", style={"font-size": "14px"}),
-                format_mom_change(revenue_mom_change)
-            ]
-        ),
-        style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"}
-    )
-
-def create_metric_2(total_quantity_current, quantity_mom_change):
-    """
-    Create the second metric card for total quantity sold.
-
-    Args:
-        total_quantity_current (float): Current total quantity sold.
-        quantity_mom_change (float): Month-over-month change in quantity sold.
-
-    Returns:
-        dbc.Card: Metric card for total quantity sold.
-    """
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                html.H3("Quantity Sold", className="card-title", style={"font-size": "18px"}),
-                html.H1(f"{format_large_num(total_quantity_current)}", className="card-text", 
-                        style={"font-size": "30px", "font-weight": "bold"}),
-                html.Small("Compared to previous month:", className="card-text text-muted", style={"font-size": "14px"}),
-                format_mom_change(quantity_mom_change)
-            ]
-        ),
-        style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"},
-    )
-
-def create_metric_3(completion_rate_current, completion_rate_mom_change):
-    """
-    Create the third metric card for order completion rate.
-
-    Args:
-        completion_rate_current (float): Current order completion rate.
-        completion_rate_mom_change (float): Month-over-month change in completion rate.
-
-    Returns:
-        dbc.Card: Metric card for order completion rate.
-    """
-    return dbc.Card(
-        dbc.CardBody(
-            [
-                html.H3("Completed Orders", className="card-title", style={"font-size": "18px"}),
-                html.H1(f"{completion_rate_current:.2f}%", className="card-text", 
-                        style={"font-size": "30px", "font-weight": "bold"}),
-                html.Small("Compared to previous month:", className="card-text text-muted", style={"font-size": "14px"}),
-                format_mom_change(completion_rate_mom_change)
-            ]
-        ),
-        style={"width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"},
-    )
-
-
 def create_footer():
     """
     Create the footer component for the dashboard.
@@ -239,3 +166,81 @@ def create_status_checkbox(status_mapping):
             inline=False  # Display vertically
         )
     ])
+
+def create_filters(month_labels, status_mapping):
+    """
+    Create the filters component for the dashboard.
+    
+    Args:
+        month_labels (dict): Mapping of month labels for the date slider.
+        status_mapping (dict): Mapping of order statuses.
+    
+    Returns:
+        dbc.Col: Filters component.
+    """
+    date_slider = create_date_slider(month_labels)
+    promotion_toggle = create_promotion_toggle()
+    fulfillment_radio = create_fulfillment_radio()
+    status_checkbox = create_status_checkbox(status_mapping)
+
+    return dbc.Col([
+        dbc.Card(
+            dbc.CardBody([
+                html.H4("Filters", className="text-center mb-4", style={"font-weight": "bold", "color": "#2c3e50"}),
+
+                html.Label("Select Month:", className="fw-bold", style={"color": "#34495e"}),
+                date_slider,
+                html.Hr(),
+
+                html.Label("Promotions Only:", className="fw-bold mt-3", style={"color": "#34495e"}),
+                promotion_toggle,
+                html.Hr(),
+
+                html.Label("Fulfillment Type:", className="fw-bold mt-3", style={"color": "#34495e"}),
+                fulfillment_radio,
+                html.Hr(),
+
+                html.Label("Order Status:", className="fw-bold mt-3", style={"color": "#34495e"}),
+                status_checkbox,
+                html.Br(),
+
+                html.Div(id="filtered-data", style={"font-size": "8px", "font-style": "italic"})
+            ]),
+            className="shadow-sm rounded-3 p-4",
+            style={"background-color": "#ffffff", "border": "1px solid #ddd", "width": "350px"}  # Reduced width
+        )
+    ], width="auto", className="d-flex justify-content-center")
+
+def create_metrics():
+    """
+    Create the metrics component for the dashboard.
+    
+    Returns:
+        dbc.Row: Metrics component.
+    """
+    return dbc.Row([
+        dbc.Col(dbc.Card(dbc.CardBody(id="metric-1"), style={
+            "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"})),
+        dbc.Col(dbc.Card(dbc.CardBody(id="metric-2"), style={
+            "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"})),
+        dbc.Col(dbc.Card(dbc.CardBody(id="metric-3"), style={
+            "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"}))
+    ], id='metrics', justify="center")
+
+def create_visuals():
+    """
+    Create the visuals component for the dashboard.
+    
+    Returns:
+        dbc.Row: Visuals component.
+    """
+    return dbc.Row([
+        dbc.Row([
+            dbc.Col([dcc.Graph(id='map', figure={})], style={"max-width": "50%"}),
+            dbc.Col([dcc.Graph(id='state_summary', figure={})], style={"max-width": "50%"})
+            ]),
+        dbc.Row([
+            dbc.Col([dcc.Graph(id='sales', figure={})], style={"max-width": "50%"}),
+            dbc.Col([dcc.Graph(id='product', figure={})], style={"max-width": "50%"})
+        ])
+    ], id='visuals')
