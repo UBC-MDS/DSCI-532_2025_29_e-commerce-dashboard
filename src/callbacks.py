@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import Input, Output, callback
 from .app import df, month_labels, status_mapping, india
+from .components import format_large_num
 
 
 @callback(
@@ -170,13 +171,13 @@ def update_metrics(selected_index, promo_filter, fulfillment_filter, selected_st
     # **Wrap metrics inside dbc.CardBody()**
     metric_1_content = dbc.CardBody([
         html.H3("Revenue", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
-        html.H1(f"${revenue_selected:,.2f}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
+        html.H1(f"${format_large_num(revenue_selected)}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
         html.Small(format_mom_change(revenue_mom_change), className="card-text text-muted", style={"font-size": "14px"})
     ])
 
     metric_2_content = dbc.CardBody([
         html.H3("Quantity Sold", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
-        html.H1(f"{quantity_selected:,.0f}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
+        html.H1(f"{format_large_num(quantity_selected)}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
         html.Small(format_mom_change(quantity_mom_change), className="card-text text-muted", style={"font-size": "14px"})
     ])
 
