@@ -35,7 +35,7 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 
     # set end date to proper date
     filter_end_date = pd.to_datetime(f'{selected_date}-01') + pd.DateOffset(months=1)
-    filter_condition = f'(Date < "{filter_end_date}")'
+    filter_condition = f'(date_value < "{filter_end_date}")'
 
     # Apply promotion filter
     if promo_filter:
@@ -58,7 +58,7 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     # Store the filtered dataset
     filtered_df = df.query(filter_condition)
 
-    return f"Showing {len(filtered_df):,.0f} records up to {selected_date}.", filter_condition
+    return f"Showing {filtered_df['order_count'].sum():,.0f} records up to {selected_date}.", filter_condition
 
 @callback(
     Output("map", "figure"),
@@ -175,11 +175,22 @@ def create_product_chart(query):
         plotly.graph_objects.Figure: Product chart figure.
     """
     try:
-        selection = df.query(query)
-        selection = selection.groupby('Category')['Amount'].sum().reset_index()
+        pre_select = df.query(query).groupby('Category')['Amount'].sum().reset_index()
+
+        # get the top 5, merge the rest to 'others'
+        ordered_categories = pre_select.nlargest(5, ['Amount'], 'first')['Category'].tolist()  
+        pre_select['Category'] = pre_select['Category'].apply(lambda x: x if x in ordered_categories else 'Others')      
+        selection = pre_select.groupby('Category')['Amount'].sum().reset_index()
+
+        # add 'Others' if in index (it is possible, some will have <5 categories)
+        if ('Others' in selection['Category'].values):
+            # append at end to ensure it is displayed last
+            ordered_categories.append('Others')
+
         total_amount = selection['Amount'].sum()
         selection['Percentage'] = (selection['Amount'] / total_amount) * 100
 
+        """
         product = px.pie(
             selection,
             values='Amount',
@@ -188,7 +199,22 @@ def create_product_chart(query):
             hover_data=['Amount', 'Percentage'],
             labels={'Amount': 'Total Amount', 'Percentage': 'Percentage'}
         )
-        product.update_traces(textposition='inside', textinfo='percent+label')
+        product.update_traces(textposition='inside', textinfo='percent+label')"
+        """
+        product = px.bar(selection, x = 'Amount', 
+                         y = 'Category', color = 'Category', 
+                         orientation='h',
+                         hover_data=['Amount', 'Percentage'],
+                         #height = 'auto'
+                         )
+        # hide legend and y-axis since Category names are specified
+        product.update_layout(showlegend = False)
+        product.update_layout(xaxis_title = 'Sales Amount', 
+                              yaxis_title = None)
+        # sort by totals
+        #product.update_layout(yaxis={'categoryorder':'total ascending'})
+        product.update_yaxes(categoryorder = 'array', 
+                             categoryarray = ordered_categories[::-1])
 
         return product
     except Exception as e:
