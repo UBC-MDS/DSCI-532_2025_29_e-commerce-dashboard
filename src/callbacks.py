@@ -158,13 +158,13 @@ def update_metrics(selected_index, promo_filter, fulfillment_filter, selected_st
 
     # **Set color and arrow indicators**
     def format_mom_change(value):
-        """Format Month-over-Month (MoM) change with colors and arrows."""
+        abs_value = abs(value)  # Get the absolute value (remove sign)
         if value > 0:
-            return html.Span([f"{value:+.1f}% ", "▲", " past month"], style={"color": "skyblue", "font-weight": "bold"})
+            return html.Span([f"{abs_value:.1f}% ", "▲ ", " past month"], style={"color": "orange", "font-weight": "bold"})
         elif value < 0:
-            return html.Span([f"{value:+.1f}% ", "▼", " past month"], style={"color": "orange", "font-weight": "bold"})
+            return html.Span([f"{abs_value:.1f}% ", "▼ ", " past month"], style={"color": "skyblue", "font-weight": "bold"})
         else:
-            return html.Span([f"{value:+.1f}% ", " past month"], style={"color": "gray", "font-weight": "bold"})
+            return html.Span([f"{abs_value:.1f}% ", " past month"], style={"color": "gray", "font-weight": "bold"})
 
 
     # **Wrap metrics inside dbc.CardBody()**
