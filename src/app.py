@@ -32,10 +32,14 @@ metric_2 = create_metric_2(total_quantity_current, quantity_mom_change)
 metric_3 = create_metric_3(completion_rate_current, completion_rate_mom_change)
 
 metrics = dbc.Row([
-    dbc.Col(metric_1),
-    dbc.Col(metric_2),
-    dbc.Col(metric_3)
-], id='metrics')
+    dbc.Col(dbc.Card(dbc.CardBody(id="metric-1"), style={
+        "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"})),
+    dbc.Col(dbc.Card(dbc.CardBody(id="metric-2"), style={
+        "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"})),
+    dbc.Col(dbc.Card(dbc.CardBody(id="metric-3"), style={
+        "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"}))
+], id='metrics', justify="center")
+
 
 # Footer
 footer = create_footer()
