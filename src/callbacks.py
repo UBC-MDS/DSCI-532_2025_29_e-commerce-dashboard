@@ -1,8 +1,11 @@
 import pandas as pd
+from dash import html
 import plotly.express as px
 import plotly.graph_objects as go
+import dash_bootstrap_components as dbc
 from dash import Input, Output, callback
 from .app import df, month_labels, status_mapping, india
+
 
 @callback(
     Output("filtered-data", "children"),  # Debugging output
@@ -59,6 +62,133 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     filtered_df = df.query(filter_condition)
 
     return f"Showing {len(filtered_df):,.0f} records up to {selected_date}.", filter_condition
+
+
+@callback(
+    Output("metric-1", "children"),  # Revenue metric
+    Output("metric-2", "children"),  # Quantity metric
+    Output("metric-3", "children"),  # Completion rate metric
+    Input("date-slider", "value"),
+    Input("promotion-toggle", "value"),
+    Input("fulfillment-radio", "value"),
+    Input("status-checkbox", "value"),
+    Input("map", "clickData"),
+)
+def update_metrics(selected_index, promo_filter, fulfillment_filter, selected_statuses, click_data):
+    """
+    Update the metric cards dynamically based on all filters.
+
+    Args:
+        selected_index (int): Selected index from the date slider.
+        promo_filter (bool): Whether promotion filter is applied.
+        fulfillment_filter (str): Selected fulfillment type.
+        selected_statuses (list): List of selected order statuses.
+        click_data (dict): Data from map click event.
+
+    Returns:
+        tuple: Updated metric contents for revenue, quantity, and completion rate.
+    """
+    # Convert slider index to corresponding year-month
+    selected_date = month_labels.get(selected_index, None)
+
+    if not selected_date:
+        return dbc.CardBody("N/A"), dbc.CardBody("N/A"), dbc.CardBody("N/A")
+
+    selected_month = pd.to_datetime(f"{selected_date}-01")
+    previous_month = selected_month - pd.DateOffset(months=1)
+    previous_month_str = previous_month.strftime("%Y-%m")
+
+    # Apply filters to dataset
+    filter_condition = f'year_month == "{selected_date}"'
+
+    if promo_filter:
+        filter_condition += ' & (is_promotion == True)'
+
+    if fulfillment_filter != "Both":
+        filter_condition += f' & (Fulfilment == "{fulfillment_filter}")'
+
+    if selected_statuses:
+        filter_statuses = [item for key, values in status_mapping.items() for item in values if key in selected_statuses]
+        filter_statuses_str = ', '.join([f'"{status}"' for status in filter_statuses])
+        filter_condition += f' & (Status in [{filter_statuses_str}])'
+
+    if click_data and 'points' in click_data:
+        state = click_data['points'][0]['location']
+        filter_condition += f' & (state == "{state}")'
+
+    # Filter dataset for the selected month
+    filtered_df = df.query(filter_condition)
+
+    # Compute revenue, quantity, and completion rate for selected month
+    revenue_selected = filtered_df["Amount"].sum()
+    quantity_selected = filtered_df["Qty"].sum()
+
+    completed_status = ["Shipped", "Shipped - Delivered to Buyer", "Shipped - Picked Up", "Shipped - Out for Delivery"]
+    completed_orders = filtered_df[filtered_df["Status"].isin(completed_status)]
+    completion_rate_selected = (len(completed_orders) / len(filtered_df)) * 100 if len(filtered_df) > 0 else 0
+
+    # Compute the previous month's metrics
+    if previous_month_str in df["year_month"].unique():
+        prev_df = df.query(f'year_month == "{previous_month_str}"')
+
+        if promo_filter:
+            prev_df = prev_df[prev_df["is_promotion"] == True]
+
+        if fulfillment_filter != "Both":
+            prev_df = prev_df[prev_df["Fulfilment"] == fulfillment_filter]
+
+        if selected_statuses:
+            prev_df = prev_df[prev_df["Status"].isin(filter_statuses)]
+
+        if click_data and 'points' in click_data:
+            prev_df = prev_df[prev_df["state"] == state]
+
+        revenue_prev = prev_df["Amount"].sum()
+        quantity_prev = prev_df["Qty"].sum()
+        completed_prev = prev_df[prev_df["Status"].isin(completed_status)]
+        completion_rate_prev = (len(completed_prev) / len(prev_df)) * 100 if len(prev_df) > 0 else 0
+
+        revenue_mom_change = ((revenue_selected - revenue_prev) / revenue_prev) * 100 if revenue_prev > 0 else 0
+        quantity_mom_change = ((quantity_selected - quantity_prev) / quantity_prev) * 100 if quantity_prev > 0 else 0
+        completion_rate_mom_change = ((completion_rate_selected - completion_rate_prev) / completion_rate_prev) * 100 if completion_rate_prev > 0 else 0
+    else:
+        revenue_mom_change = 0
+        quantity_mom_change = 0
+        completion_rate_mom_change = 0
+
+    # **Set color and arrow indicators**
+    def format_mom_change(value):
+        abs_value = abs(value)  # Get the absolute value (remove sign)
+        if value > 0:
+            return html.Span([f"{abs_value:.1f}% ", "▲ ", " past month"], style={"color": "orange", "font-weight": "bold"})
+        elif value < 0:
+            return html.Span([f"{abs_value:.1f}% ", "▼ ", " past month"], style={"color": "skyblue", "font-weight": "bold"})
+        else:
+            return html.Span([f"{abs_value:.1f}% ", " past month"], style={"color": "gray", "font-weight": "bold"})
+
+
+    # **Wrap metrics inside dbc.CardBody()**
+    metric_1_content = dbc.CardBody([
+        html.H3("Revenue", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
+        html.H1(f"${revenue_selected:,.2f}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
+        html.Small(format_mom_change(revenue_mom_change), className="card-text text-muted", style={"font-size": "14px"})
+    ])
+
+    metric_2_content = dbc.CardBody([
+        html.H3("Quantity Sold", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
+        html.H1(f"{quantity_selected:,.0f}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
+        html.Small(format_mom_change(quantity_mom_change), className="card-text text-muted", style={"font-size": "14px"})
+    ])
+
+    metric_3_content = dbc.CardBody([
+        html.H3("Completed Orders", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
+        html.H1(f"{completion_rate_selected:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
+        html.Small(format_mom_change(completion_rate_mom_change), className="card-text text-muted", style={"font-size": "14px"})
+    ])
+
+    return metric_1_content, metric_2_content, metric_3_content
+
+
 
 @callback(
     Output("map", "figure"),
