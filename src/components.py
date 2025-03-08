@@ -46,7 +46,7 @@ def create_title():
     Returns:
         dbc.Row: Title component.
     """
-    return dbc.Row(html.H1("Sales Dashboard"), className="bg-secondary text-black p-2 mb-4 text-center", id='title')
+    return dbc.Row(html.H1("Amazon Sales Dashboard"), className="bg-secondary text-black p-2 mb-4 text-center", id='title')
 
 def format_mom_change(value):
     """
@@ -220,27 +220,45 @@ def create_metrics():
     """
     return dbc.Row([
         dbc.Col(dbc.Card(dbc.CardBody(id="metric-1"), style={
-            "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"})),
+            "width": "94%", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"}), width=4),
         dbc.Col(dbc.Card(dbc.CardBody(id="metric-2"), style={
-            "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"})),
+            "width": "94%", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"}), width=4),
         dbc.Col(dbc.Card(dbc.CardBody(id="metric-3"), style={
-            "width": "18rem", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"}))
+            "width": "94%", "text-align": "center", "background-color": "#f8f9fa", "border-radius": "10px"}), width=4)
     ], id='metrics', justify="center")
 
+def create_map_graph():
+    return dbc.Card([
+        dbc.CardHeader('Map of India'),
+        dbc.CardBody(dcc.Graph(id='map', figure={}))
+        ]) 
+
+def create_state_summary_graph():
+    return dbc.Card([
+        dbc.CardHeader('Title'),
+        dbc.CardBody(dcc.Graph(id='state_summary', figure={}))
+    ])
+
+def create_sales_graph():
+    return dbc.Card([
+        dbc.CardHeader('Weekly Sales'),
+        dbc.CardBody(dcc.Graph(id='sales', figure={})), 
+    ], style={"margin-top": "15px"}) 
+
+def create_product_graph():
+    return dbc.Card([
+        dbc.CardHeader('Sales Breakdown'),
+        dbc.CardBody(dcc.Graph(id='product', figure={}))
+    ], style={"margin-top": "15px"}) 
+
 def create_visuals():
-    """
-    Create the visuals component for the dashboard.
-    
-    Returns:
-        dbc.Row: Visuals component.
-    """
     return dbc.Row([
-        dbc.Row([
-            dbc.Col([dcc.Graph(id='map', figure={})], style={"max-width": "50%"}),
-            dbc.Col([dcc.Graph(id='state_summary', figure={})], style={"max-width": "50%"})
-            ]),
-        dbc.Row([
-            dbc.Col([dcc.Graph(id='sales', figure={})], style={"max-width": "50%"}),
-            dbc.Col([dcc.Graph(id='product', figure={})], style={"max-width": "50%"})
-        ])
-    ], id='visuals')
+                dbc.Row([
+                    dbc.Col([create_map_graph()], className="chart_column"),
+                    dbc.Col([create_state_summary_graph()], className="chart_column")
+                    ]),
+                dbc.Row([
+                    dbc.Col([create_sales_graph()], className="chart_column"),
+                    dbc.Col([create_product_graph()], className="chart_column")
+                ])
+            ], id='visuals')

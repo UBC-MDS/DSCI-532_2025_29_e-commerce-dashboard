@@ -4,7 +4,10 @@ from .data import import_data, import_geojson, preprocess_data
 from .components import create_title, create_footer, create_filters, create_metrics, create_visuals
 
 # Initialize the app
-app = Dash(__name__, external_stylesheets=[dbc.themes.YETI])
+app = Dash(
+    __name__, 
+    external_stylesheets=[dbc.themes.YETI],
+    title="Amazon Sales Dashboard")
 server = app.server
 
 # Import data
@@ -23,55 +26,6 @@ filters = create_filters(month_labels, status_mapping)
 visuals = create_visuals()
 footer = create_footer()
 
-<<<<<<< Updated upstream
-# Filters
-date_slider = create_date_slider(month_labels)
-promotion_toggle = create_promotion_toggle()
-fulfillment_radio = create_fulfillment_radio()
-status_checkbox = create_status_checkbox(status_mapping)
-
-filters = dbc.Col([
-    dbc.Card(
-        dbc.CardBody([
-            html.H4("Filters", className="text-center mb-4", style={"font-weight": "bold", "color": "#2c3e50"}),
-
-            html.Label("Select Month:", className="fw-bold", style={"color": "#34495e"}),
-            date_slider,
-            html.Hr(),
-
-            html.Label("Promotions Only:", className="fw-bold mt-3", style={"color": "#34495e"}),
-            promotion_toggle,
-            html.Hr(),
-
-            html.Label("Fulfillment Type:", className="fw-bold mt-3", style={"color": "#34495e"}),
-            fulfillment_radio,
-            html.Hr(),
-
-            html.Label("Order Status:", className="fw-bold mt-3", style={"color": "#34495e"}),
-            status_checkbox,
-            html.Br(),
-
-            html.Div(id="filtered-data", style={"font-size": "8px", "font-style": "italic"})
-        ]),
-        className="shadow-sm rounded-3 p-4",
-        style={"background-color": "#ffffff", "border": "1px solid #ddd", "width": "350px"}  # Reduced width
-    )
-], width="auto", className="d-flex justify-content-center")
-
-# Visuals
-visuals = dbc.Row([
-            dbc.Row([
-                dbc.Col([dcc.Graph(id='map', figure={})]),
-                dbc.Col([dcc.Graph(id='state_summary', figure={})])
-                ]),
-            dbc.Row([
-                dbc.Col([dcc.Graph(id='sales', figure={})]),
-                dbc.Col([dcc.Graph(id='product', figure={})])
-            ])
-        ], id='visuals')
-
-=======
->>>>>>> Stashed changes
 # Layout
 app.layout = dbc.Container([
     dcc.Store(id="filter_condition", data={}),
