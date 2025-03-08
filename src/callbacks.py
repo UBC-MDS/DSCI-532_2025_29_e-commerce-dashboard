@@ -7,8 +7,6 @@ from dash import Input, Output, callback
 from .app import df, month_labels, status_mapping, india
 from .components import format_large_num
 
-
-
 @callback(
     Output("filtered-data", "children"),  # Debugging output
     Output("filter_condition", "data"),
@@ -65,7 +63,6 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
 
     return f"Showing {filtered_df['order_count'].sum():,.0f} records up to {selected_date}.", filter_condition
 
-
 @callback(
     Output("metric-1", "children"),  # Revenue metric
     Output("metric-2", "children"),  # Quantity metric
@@ -172,134 +169,7 @@ def update_metrics(selected_index, promo_filter, fulfillment_filter, selected_st
     # **Wrap metrics inside dbc.CardBody()**
     metric_1_content = dbc.CardBody([
         html.H3("Revenue", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
-        html.H1(f"${format_large_num(revenue_selected)}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
-        html.Small(format_mom_change(revenue_mom_change), className="card-text text-muted", style={"font-size": "14px"})
-    ])
-
-    metric_2_content = dbc.CardBody([
-        html.H3("Quantity Sold", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
-        html.H1(f"{format_large_num(quantity_selected)}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
-        html.Small(format_mom_change(quantity_mom_change), className="card-text text-muted", style={"font-size": "14px"})
-    ])
-
-    metric_3_content = dbc.CardBody([
-        html.H3("Completed Orders", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
-        html.H1(f"{completion_rate_selected:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
-        html.Small(format_mom_change(completion_rate_mom_change), className="card-text text-muted", style={"font-size": "14px"})
-    ])
-
-    return metric_1_content, metric_2_content, metric_3_content
-
-
-
-
-@callback(
-    Output("metric-1", "children"),  # Revenue metric
-    Output("metric-2", "children"),  # Quantity metric
-    Output("metric-3", "children"),  # Completion rate metric
-    Input("date-slider", "value"),
-    Input("promotion-toggle", "value"),
-    Input("fulfillment-radio", "value"),
-    Input("status-checkbox", "value"),
-    Input("map", "clickData"),
-)
-def update_metrics(selected_index, promo_filter, fulfillment_filter, selected_statuses, click_data):
-    """
-    Update the metric cards dynamically based on all filters.
-
-    Args:
-        selected_index (int): Selected index from the date slider.
-        promo_filter (bool): Whether promotion filter is applied.
-        fulfillment_filter (str): Selected fulfillment type.
-        selected_statuses (list): List of selected order statuses.
-        click_data (dict): Data from map click event.
-
-    Returns:
-        tuple: Updated metric contents for revenue, quantity, and completion rate.
-    """
-    # Convert slider index to corresponding year-month
-    selected_date = month_labels.get(selected_index, None)
-
-    if not selected_date:
-        return dbc.CardBody("N/A"), dbc.CardBody("N/A"), dbc.CardBody("N/A")
-
-    selected_month = pd.to_datetime(f"{selected_date}-01")
-    previous_month = selected_month - pd.DateOffset(months=1)
-    previous_month_str = previous_month.strftime("%Y-%m")
-
-    # Apply filters to dataset
-    filter_condition = f'year_month == "{selected_date}"'
-
-    if promo_filter:
-        filter_condition += ' & (is_promotion == True)'
-
-    if fulfillment_filter != "Both":
-        filter_condition += f' & (Fulfilment == "{fulfillment_filter}")'
-
-    if selected_statuses:
-        filter_statuses = [item for key, values in status_mapping.items() for item in values if key in selected_statuses]
-        filter_statuses_str = ', '.join([f'"{status}"' for status in filter_statuses])
-        filter_condition += f' & (Status in [{filter_statuses_str}])'
-
-    if click_data and 'points' in click_data:
-        state = click_data['points'][0]['location']
-        filter_condition += f' & (state == "{state}")'
-
-    # Filter dataset for the selected month
-    filtered_df = df.query(filter_condition)
-
-    # Compute revenue, quantity, and completion rate for selected month
-    revenue_selected = filtered_df["Amount"].sum()
-    quantity_selected = filtered_df["Qty"].sum()
-
-    completed_status = ["Shipped", "Shipped - Delivered to Buyer", "Shipped - Picked Up", "Shipped - Out for Delivery"]
-    completed_orders = filtered_df[filtered_df["Status"].isin(completed_status)]
-    completion_rate_selected = (len(completed_orders) / len(filtered_df)) * 100 if len(filtered_df) > 0 else 0
-
-    # Compute the previous month's metrics
-    if previous_month_str in df["year_month"].unique():
-        prev_df = df.query(f'year_month == "{previous_month_str}"')
-
-        if promo_filter:
-            prev_df = prev_df[prev_df["is_promotion"] == True]
-
-        if fulfillment_filter != "Both":
-            prev_df = prev_df[prev_df["Fulfilment"] == fulfillment_filter]
-
-        if selected_statuses:
-            prev_df = prev_df[prev_df["Status"].isin(filter_statuses)]
-
-        if click_data and 'points' in click_data:
-            prev_df = prev_df[prev_df["state"] == state]
-
-        revenue_prev = prev_df["Amount"].sum()
-        quantity_prev = prev_df["Qty"].sum()
-        completed_prev = prev_df[prev_df["Status"].isin(completed_status)]
-        completion_rate_prev = (len(completed_prev) / len(prev_df)) * 100 if len(prev_df) > 0 else 0
-
-        revenue_mom_change = ((revenue_selected - revenue_prev) / revenue_prev) * 100 if revenue_prev > 0 else 0
-        quantity_mom_change = ((quantity_selected - quantity_prev) / quantity_prev) * 100 if quantity_prev > 0 else 0
-        completion_rate_mom_change = ((completion_rate_selected - completion_rate_prev) / completion_rate_prev) * 100 if completion_rate_prev > 0 else 0
-    else:
-        revenue_mom_change = 0
-        quantity_mom_change = 0
-        completion_rate_mom_change = 0
-
-    # **Set color and arrow indicators**
-    def format_mom_change(value):
-        abs_value = abs(value)  # Get the absolute value (remove sign)
-        if value > 0:
-            return html.Span([f"{abs_value:.1f}% ", "▲ ", " past month"], style={"color": "orange", "font-weight": "bold"})
-        elif value < 0:
-            return html.Span([f"{abs_value:.1f}% ", "▼ ", " past month"], style={"color": "skyblue", "font-weight": "bold"})
-        else:
-            return html.Span([f"{abs_value:.1f}% ", " past month"], style={"color": "gray", "font-weight": "bold"})
-
-
-    # **Wrap metrics inside dbc.CardBody()**
-    metric_1_content = dbc.CardBody([
-        html.H3("Revenue", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
-        html.H1(f"${revenue_selected:,.2f}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
+        html.H1(f"₹{revenue_selected:,.2f}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
         html.Small(format_mom_change(revenue_mom_change), className="card-text text-muted", style={"font-size": "14px"})
     ])
 
@@ -316,8 +186,6 @@ def update_metrics(selected_index, promo_filter, fulfillment_filter, selected_st
     ])
 
     return metric_1_content, metric_2_content, metric_3_content
-
-
 
 @callback(
     Output("map", "figure"),
@@ -349,33 +217,44 @@ def create_map(query, click_data):
 
     # Add a column to indicate whether the state is selected
     state_sales['selected'] = state_sales['state'].apply(lambda x: x == click_data['points'][0]['location'] if click_data and 'points' in click_data else False)
+    state_sales.rename(columns={'state' : 'State'}, inplace=True)
 
     fig = px.choropleth(
         state_sales,
         geojson=india.__geo_interface__,
-        locations='state',
+        locations='State',
         featureidkey="properties.state",
         color='Amount',
-        hover_name='state',
-        hover_data=['Amount'],
-        title="Sales by State and Territories",
-        color_continuous_scale=px.colors.sequential.Bluyl  # Change the color theme
+        hover_name='State',
+        hover_data={'State': True},
+        color_continuous_scale=px.colors.sequential.Bluyl
+    )
+
+    # Custom hover template
+    fig.update_traces(
+        hovertemplate="<b>%{hovertext}</b>",
+        hovertext=state_sales['State'] + '<br>Amount: ₹' + state_sales['Amount'].apply(lambda x: f'{x/1e6:.1f}M' if x >= 1e6 else f'{x/1e3:.1f}K' if x >= 1e3 else f'{x:.0f}')
     )
 
     # Highlight the selected state
-    fig.update_traces(marker_line_width=state_sales['selected'].apply(lambda x: 3 if x else 0),
-                      marker_line_color='white')
+    fig.update_traces(marker_line_width=state_sales['selected'].apply(lambda x: 3 if x else 1),
+                      marker_line_color='black')
 
     fig.update_geos(
         fitbounds="locations",
         visible=False,
-        projection_scale=5,  # Adjust this value to zoom in or out
+        projection_type="mercator",
+        projection_scale=6,  # Adjust this value to zoom in or out
         center={"lat": 20.5937, "lon": 78.9629}  # Center the map on India
     )
     fig.update_layout(
-        coloraxis_showscale=False,
         modebar=dict(remove=['select', 'lasso2d']),
-        margin={"r":0,"t":50,"l":0,"b":0}  # Adjust margins to make the map wider
+        margin={"r":0,"t":50,"l":0,"b":0},
+        coloraxis_colorbar=dict(
+            x=-0.1,  # Move color scale to the left
+            title="Sales",
+            ticks="outside"
+        )
     )
 
     return fig
@@ -404,7 +283,6 @@ def create_sales_chart(query):
             selection,
             x='year_month',
             y='Amount',
-            title='Monthly Sales',
             labels={'year_month': 'Month', 'Amount': 'Total Sales'},
             line_shape='linear'
         )
