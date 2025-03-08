@@ -12,30 +12,9 @@ def import_data(url):
     Returns:
         pd.DataFrame: Preprocessed sales data.
     """
-    df = pd.read_csv(url, nrows=1000)
-    df = df.iloc[:, :-1]  # Drop last column
-    df.rename(columns={'ship-state': 'state'}, inplace=True)
-    df['state'] = df['state'].str.title()
-    df['state'].dropna(inplace=True)
-    df['Date'] = pd.to_datetime(df["Date"], format="%m-%d-%y", errors="coerce")
-
-    # Extract year-month for aggregation
-    df["year_month"] = df["Date"].dt.to_period("M").astype(str)
-
-    # Add flag for promotions
-    df['is_promotion'] = df['promotion-ids'].notna()  # will capture both NA and empty string
-
-    # Mapping to rename state names in sales data
-    state_mapping = {
-        'Dadra And Nagar': 'Dadra and Nagar Haveli and Daman and Diu',
-        'New Delhi': 'Delhi',
-        'Andaman & Nicobar ': 'Andaman and Nicobar',
-        'Jammu & Kashmir ': 'Jammu and Kashmir',
-        'Rj': 'Rajasthan'
-    }
-
-    df['state'] = df['state'].replace(state_mapping)
-
+    df = pd.read_csv(url, nrows=None)
+    # add a filterable date_value for the 1st of the month
+    df['date_value'] = pd.to_datetime(df['year_month'] + '-01')
     return df
 
 # Import geojson file for India

@@ -8,7 +8,7 @@ app = Dash(__name__, external_stylesheets=[dbc.themes.YETI])
 server = app.server
 
 # Import data
-df = import_data('data/raw/amazon_sample.zip')
+df = import_data('data/amazon_sample.zip')
 india = import_geojson('https://naciscdn.org/naturalearth/50m/cultural/ne_50m_admin_1_states_provinces.zip')
 
 # Preprocessed data
