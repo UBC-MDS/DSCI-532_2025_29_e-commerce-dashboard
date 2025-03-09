@@ -60,6 +60,11 @@ def preprocess_data(df):
     # Create a mapping of months to index positions for the slider
     month_labels = {i: label for i, label in enumerate(all_months_sorted)}
 
+    # Create a mapping of weeks
+    weeks = df['year_week'].unique()
+    sorted_weeks = sorted(weeks, key=lambda x: pd.to_datetime(x.split('/')[0]))
+    week_labels = {i: week for i, week in enumerate(sorted_weeks)}
+
     # Filter only last 2 months
     df_month_values = (
         df.groupby('year_month').agg({'Amount': 'sum', 'Qty': 'sum'})
@@ -112,6 +117,7 @@ def preprocess_data(df):
     return {
         "status_mapping": status_mapping,
         "month_labels": month_labels,
+        "week_labels": week_labels,
         "total_revenue_current": total_revenue_current,
         "revenue_mom_change": revenue_mom_change,
         "total_quantity_current": total_quantity_current,
