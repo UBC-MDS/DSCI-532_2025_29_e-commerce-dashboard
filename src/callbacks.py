@@ -4,17 +4,19 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import Input, Output, callback
-from .app import df, month_labels, status_mapping, india
+from .app import df, month_labels, week_labels, status_mapping, india
 from .components import format_large_num
 
 @callback(
     Output("filtered-data", "children"),  # Debugging output
     Output("filter_condition", "data"),
-    Input("date-slider", "value"),
+    Input("date-slider", "value"),       # Monthly slider value
+    Input("week-range-slider", "value"), # Week range slider value [start, end]
     Input("promotion-toggle", "value"),
     Input("fulfillment-radio", "value"),
     Input("status-checkbox", "value"),
     Input("map", "clickData"),
+    Input("time_granularity", "value")   # Radio button for Monthly/Weekly
 )
 def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selected_statuses, click_data):
     """
@@ -357,3 +359,35 @@ def create_product_chart(query):
     except Exception as e:
         print(f"Error in create_product_chart: {e}")
         return go.Figure(data=[go.Scatter(x=[], y=[], mode='text', text=f"Error: {e}")])
+
+@callback(
+    Output('date-slider-container', 'style'),
+    Output('week-selector-container', 'style'),
+    Output('month-label', 'style'),
+    Output('week-label', 'style'),
+    Input('time_granularity', 'value')
+)
+def toggle_time_selection_visibility(time_granularity):
+    """
+    Toggle visibility of monthly slider and weekly dropdown based on time granularity selection.
+    
+    Args:
+        time_granularity (str): Selected value from the radio buttons ('Monthly' or 'Weekly')
+    
+    Returns:
+        tuple: Styles for date slider container, week selector container, month label, and week label
+    """
+    if time_granularity == 'Monthly':
+        return (
+            {'display': 'block'},  # Show monthly slider
+            {'display': 'none'},   # Hide weekly dropdown
+            {'display': 'block', 'color': '#34495e', 'font-weight': 'bold'},  # Show month label
+            {'display': 'none'}    # Hide week label
+        )
+    else:  # Weekly
+        return (
+            {'display': 'none'},   # Hide monthly slider
+            {'display': 'block'},  # Show weekly dropdown
+            {'display': 'none'},   # Hide month label
+            {'display': 'block', 'color': '#34495e', 'font-weight': 'bold'}  # Show week label
+        )
