@@ -18,29 +18,47 @@ from .components import format_large_num
     Input("map", "clickData"),
     Input("time_granularity", "value")   # Radio button for Monthly/Weekly
 )
-def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selected_statuses, click_data):
+def update_filtered_data(date_slider_value, week_range_value, promo_filter, fulfillment_filter, selected_statuses, click_data, time_granularity):
     """
     Update the filtered data based on user inputs.
 
     Args:
-        selected_index (int): Selected index from the date slider.
+        date_slider_value (int): Selected index from the date slider.
+        week_range_value (list): Selected [start, end] week indices from the range slider.
         promo_filter (bool): Promotion filter toggle value.
         fulfillment_filter (str): Selected fulfillment type.
         selected_statuses (list): List of selected order statuses.
         click_data (dict): Data from map click event.
+        time_granularity (str): "Monthly" or "Weekly" - determines if filtering is based on months or weeks.
 
     Returns:
         tuple: filtering message and filter condition.
     """
-    # Convert slider index to corresponding year-month
-    selected_date = month_labels.get(selected_index, None)
+    if time_granularity == "Monthly":
+        selected_index = date_slider_value
+        selected_date = month_labels.get(selected_index, None)
+        if not selected_date:
+            return "No selection", ""
+        filter_end_date = pd.to_datetime(f'{selected_date}-01') + pd.DateOffset(months=1)
+        filter_condition = f'(date_value < "{filter_end_date}")'
+        display_date = selected_date
+    else:  # Weekly
+        start_index, end_index = week_range_value  #Unpack the range slider values
+        print(f"start_index: {start_index}, end_index: {end_index}")
 
-    if not selected_date:
-        return "No selection", ""
-
-    # set end date to proper date
-    filter_end_date = pd.to_datetime(f'{selected_date}-01') + pd.DateOffset(months=1)
-    filter_condition = f'(date_value < "{filter_end_date}")'
+        all_weeks = list(week_labels.values())  # example -  ['2022-03-28/2022-04-03', '2022-04-04/2022-04-10']
+        selected_weeks = all_weeks[start_index:end_index + 1]
+        
+        start_week = week_labels.get(start_index, None)
+        end_week = week_labels.get(end_index, None)
+        print(f"start_week: {start_week}, end_week: {end_week}")
+        
+        if not start_week or not end_week:
+            return "No selection", ""
+        
+        # Filter condition using the list of selected weeks
+        filter_condition = f'(year_week in {selected_weeks})'
+        display_date = f"{start_week[-5:]}-{end_week[-5:]}"
 
     # Apply promotion filter
     if promo_filter:
@@ -63,7 +81,7 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     # Store the filtered dataset
     filtered_df = df.query(filter_condition)
 
-    return f"Showing {filtered_df['order_count'].sum():,.0f} records up to {selected_date}.", filter_condition
+    return f"Showing {filtered_df['order_count'].sum():,.0f} records for {display_date}.", filter_condition
 
 @callback(
     Output("metric-1", "children"),  # Revenue metric
