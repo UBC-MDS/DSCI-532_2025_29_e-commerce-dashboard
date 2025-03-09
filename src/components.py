@@ -275,7 +275,7 @@ def create_state_summary_graph():
 
 def create_sales_graph():
     return dbc.Card([
-        dbc.CardHeader('Weekly Sales'),
+        dbc.CardHeader(id='sales-chart-header', children='Monthly Sales'),
         dbc.CardBody(dcc.Graph(id='sales', figure={})), 
     ], style={"margin-top": "15px"}) 
 
