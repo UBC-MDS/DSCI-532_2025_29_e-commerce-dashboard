@@ -39,6 +39,45 @@ def get_latest_commit_date():
         print(f"Error fetching commit date: {e}")
         return "Unknown Date"
 
+def format_indian_rupees(amount):
+    """
+    Format a number in the Indian Rupee system with proper separators.
+    
+    Args:
+        amount (float): The amount to format.
+    
+    Returns:
+        str: Formatted string (e.g., ₹9,87,200 for 987200).
+    """
+    if amount is None or amount == 0:
+        return "₹0"
+    
+    # Convert to absolute integer value and string
+    amount_str = str(abs(int(amount)))
+    length = len(amount_str)
+    
+    # Handle numbers with 3 or fewer digits
+    if length <= 3:
+        return f"₹{amount_str}"
+    
+    # Take the last three digits
+    first_part = amount_str[-3:]
+    # Take the remaining digits
+    rest = amount_str[:-3]
+    
+    # Group the remaining digits in pairs of two from right to left
+    rest_formatted = ""
+    for i in range(len(rest)):
+        if i % 2 == 0 and i != 0:
+            rest_formatted = "," + rest_formatted
+        rest_formatted = rest[-i-1] + rest_formatted
+    
+    # Combine the parts
+    formatted_amount = rest_formatted + "," + first_part if rest else first_part
+    
+    # Add rupee symbol and handle negative numbers
+    return f"₹{'-' + formatted_amount if amount < 0 else formatted_amount}"
+
 def create_title():
     """
     Create the title component for the dashboard.
