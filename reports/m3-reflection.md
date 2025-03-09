@@ -43,6 +43,7 @@ Milestone 2:
 - Color for "Others" category on "Sales by State" ends up being highest after amalgamation of non-top states (#97)
 - Summary metric computation for weekly filter option not correct (#98)
 - Weekly filter options and tooltips not user friendly (#99)
+- Some have elements (map, line chart, tooltips) have not been updated to display Indian Rupee format yet (#100)
 
 ## Deviation from Best Practice ##
 
