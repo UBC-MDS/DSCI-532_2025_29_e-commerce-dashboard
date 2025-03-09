@@ -18,11 +18,12 @@ india = import_geojson('https://naciscdn.org/naturalearth/50m/cultural/ne_50m_ad
 preprocessed_data = preprocess_data(df)
 status_mapping = preprocessed_data["status_mapping"]
 month_labels = preprocessed_data["month_labels"]
+week_labels = preprocessed_data["week_labels"]
 
 # Create Components
 title = create_title()
 metrics = create_metrics()
-filters = create_filters(month_labels, status_mapping)
+filters = create_filters(month_labels, week_labels, status_mapping)
 visuals = create_visuals()
 footer = create_footer()
 
