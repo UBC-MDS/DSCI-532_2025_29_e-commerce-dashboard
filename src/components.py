@@ -187,18 +187,20 @@ def create_status_checkbox(status_mapping):
         )
     ])
 
-def create_filters(month_labels, status_mapping):
+def create_filters(month_labels, week_labels, status_mapping):
     """
     Create the filters component for the dashboard.
     
     Args:
         month_labels (dict): Mapping of month labels for the date slider.
+        week_labels (dict): Mapping of week labels for the week selector.
         status_mapping (dict): Mapping of order statuses.
     
     Returns:
         dbc.Col: Filters component.
     """
     date_slider = create_date_slider(month_labels)
+    week_selector = create_week_selector(week_labels)
     promotion_toggle = create_promotion_toggle()
     fulfillment_radio = create_fulfillment_radio()
     status_checkbox = create_status_checkbox(status_mapping)
@@ -208,8 +210,20 @@ def create_filters(month_labels, status_mapping):
             dbc.CardBody([
                 html.H4("Filters", className="text-center mb-4", style={"font-weight": "bold", "color": "#2c3e50"}),
 
-                html.Label("Select Month:", className="fw-bold", style={"color": "#34495e"}),
-                date_slider,
+                dcc.RadioItems(
+                    id='time_granularity',
+                    options=[
+                        {'label': 'Monthly', 'value': 'Monthly'},
+                        {'label': 'Weekly', 'value': 'Weekly'}
+                    ],
+                    value='Monthly',  # Default value
+                    className="mb-3"
+                ),
+
+                html.Label("Select Month:", className="fw-bold", style={"color": "#34495e"}, id='month-label'),
+                html.Div(id='date-slider-container', children=date_slider),  # Wrap slider in a Div for styling
+                html.Label("Select Week:", className="fw-bold", style={"color": "#34495e"}, id='week-label'),
+                html.Div(id='week-selector-container', children=week_selector, style={'display': 'none'}),  # Initially hidden
                 html.Hr(),
 
                 html.Label("Promotions Only:", className="fw-bold mt-3", style={"color": "#34495e"}),
