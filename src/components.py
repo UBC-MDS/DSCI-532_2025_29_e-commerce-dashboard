@@ -106,6 +106,26 @@ def create_date_slider(month_labels):
         tooltip={"placement": "bottom", "always_visible": True},
     )
 
+def create_week_selector(week_labels):
+    """
+    Create a range slider for selecting a start and end week range.
+    
+    Args:
+        week_labels (dict): Mapping of week labels (e.g., {0: '2022-03-28/2022-04-03', ...}).
+    
+    Returns:
+        dcc.RangeSlider: Range slider component for week selection.
+    """
+    max_index = max(week_labels.keys())  # Get the maximum index for the slider range
+    return dcc.RangeSlider(
+        id="week-range-slider",
+        min=0,
+        max=max_index,
+        step=1,
+        value=[0, max_index],  # Default range: from earliest to latest week  # Show short date like "03-28"
+        tooltip={"placement": "bottom", "always_visible": True}
+    )
+
 def create_promotion_toggle():
     """
     Create the promotion toggle switch component for the dashboard.
