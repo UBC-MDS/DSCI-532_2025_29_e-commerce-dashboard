@@ -14,7 +14,7 @@ This Milestone (Milestone 3):
 - Improvement to line chart aesthetics
 - Replaced "Sales by Category" pie chart with a bar chart
 - Added option to filter data by weeks (in addition to monthly)
-- Aggregated [data](data/amazon_sample.zip) along all usable dimensions into
+- Aggregated [data](data/amazon_sample.zip) along all usable dimensions in order to improve dashboard efficiency
 - Increased [sample of data](data/amazon_sample.zip) used in the chart to 50% of original data
 - Use of color channel and up/down triangle to communicate increase and change in summary metrics
 
@@ -44,6 +44,7 @@ Milestone 2:
 - Summary metric computation for weekly filter option not correct (#98)
 - Weekly filter options and tooltips not user friendly (#99)
 - Some have elements (map, line chart, tooltips) have not been updated to display Indian Rupee format yet (#100)
+- The "Sales by State" chart orders the state sales amount incorrectly when a top state is selected on the map (#101)
 
 ## Deviation from Best Practice ##
 
