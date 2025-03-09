@@ -122,7 +122,7 @@ def create_week_selector(week_labels):
         min=0,
         max=max_index,
         step=1,
-        value=[0, max_index],  # Default range: from earliest to latest week  # Show short date like "03-28"
+        value=[3, 9],  # Default range
         tooltip={"placement": "bottom", "always_visible": True}
     )
 
