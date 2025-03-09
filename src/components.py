@@ -106,6 +106,26 @@ def create_date_slider(month_labels):
         tooltip={"placement": "bottom", "always_visible": True},
     )
 
+def create_week_selector(week_labels):
+    """
+    Create a range slider for selecting a start and end week range.
+    
+    Args:
+        week_labels (dict): Mapping of week labels (e.g., {0: '2022-03-28/2022-04-03', ...}).
+    
+    Returns:
+        dcc.RangeSlider: Range slider component for week selection.
+    """
+    max_index = max(week_labels.keys())  # Get the maximum index for the slider range
+    return dcc.RangeSlider(
+        id="week-range-slider",
+        min=0,
+        max=max_index,
+        step=1,
+        value=[3, 9],  # Default range
+        tooltip={"placement": "bottom", "always_visible": True}
+    )
+
 def create_promotion_toggle():
     """
     Create the promotion toggle switch component for the dashboard.
@@ -148,6 +168,26 @@ def create_fulfillment_radio():
         )
     ], width=3)
 
+def create_time_radio():
+    """
+    Create the time granularity radio button component for the dashboard.
+    
+    Returns:
+        dbc.Col: Fulfillment radio button component.
+    """         
+    return dbc.Col([
+        dbc.RadioItems(
+            id="time_granularity",
+            options=[
+                {"label": " Monthly", "value": "Monthly"},
+                {"label": " Weekly", "value": "Weekly"}
+            ],
+            value="Monthly",
+            inline=False,
+            className="mt-2"
+        )
+    ], width=3)
+
 def create_status_checkbox(status_mapping):
     """
     Create the status checkbox component for the dashboard.
@@ -167,18 +207,21 @@ def create_status_checkbox(status_mapping):
         )
     ])
 
-def create_filters(month_labels, status_mapping):
+def create_filters(month_labels, week_labels, status_mapping):
     """
     Create the filters component for the dashboard.
     
     Args:
         month_labels (dict): Mapping of month labels for the date slider.
+        week_labels (dict): Mapping of week labels for the week selector.
         status_mapping (dict): Mapping of order statuses.
     
     Returns:
         dbc.Col: Filters component.
     """
     date_slider = create_date_slider(month_labels)
+    week_selector = create_week_selector(week_labels)
+    time_radio = create_time_radio()
     promotion_toggle = create_promotion_toggle()
     fulfillment_radio = create_fulfillment_radio()
     status_checkbox = create_status_checkbox(status_mapping)
@@ -187,9 +230,14 @@ def create_filters(month_labels, status_mapping):
         dbc.Card(
             dbc.CardBody([
                 html.H4("Filters", className="text-center mb-4", style={"font-weight": "bold", "color": "#2c3e50"}),
-
-                html.Label("Select Month:", className="fw-bold", style={"color": "#34495e"}),
-                date_slider,
+                
+                html.Label("Time Granularity:", className="fw-bold mt-3", style={"color": "#34495e"}),
+                time_radio,
+                html.Hr(),
+                html.Label("Select Month:", className="fw-bold", style={"color": "#34495e"}, id='month-label'),
+                html.Div(id='date-slider-container', children=date_slider),  # Wrap slider in a Div for styling
+                html.Label("Select Week:", className="fw-bold", style={"color": "#34495e"}, id='week-label'),
+                html.Div(id='week-selector-container', children=week_selector, style={'display': 'none'}),  # Initially hidden
                 html.Hr(),
 
                 html.Label("Promotions Only:", className="fw-bold mt-3", style={"color": "#34495e"}),
@@ -241,7 +289,7 @@ def create_state_summary_graph():
 
 def create_sales_graph():
     return dbc.Card([
-        dbc.CardHeader('Weekly Sales'),
+        dbc.CardHeader(id='sales-chart-header', children='Monthly Sales'),
         dbc.CardBody(dcc.Graph(id='sales', figure={})), 
     ], style={"margin-top": "15px"}) 
 

@@ -4,41 +4,59 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import Input, Output, callback
-from .app import df, month_labels, status_mapping, india
+from .app import df, month_labels, week_labels, status_mapping, india
 from .components import format_large_num
 
 @callback(
     Output("filtered-data", "children"),  # Debugging output
     Output("filter_condition", "data"),
-    Input("date-slider", "value"),
+    Input("date-slider", "value"),       # Monthly slider value
+    Input("week-range-slider", "value"), # Week range slider value [start, end]
     Input("promotion-toggle", "value"),
     Input("fulfillment-radio", "value"),
     Input("status-checkbox", "value"),
     Input("map", "clickData"),
+    Input("time_granularity", "value")   # Radio button for Monthly/Weekly
 )
-def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selected_statuses, click_data):
+def update_filtered_data(date_slider_value, week_range_value, promo_filter, fulfillment_filter, selected_statuses, click_data, time_granularity):
     """
     Update the filtered data based on user inputs.
 
     Args:
-        selected_index (int): Selected index from the date slider.
+        date_slider_value (int): Selected index from the date slider.
+        week_range_value (list): Selected [start, end] week indices from the range slider.
         promo_filter (bool): Promotion filter toggle value.
         fulfillment_filter (str): Selected fulfillment type.
         selected_statuses (list): List of selected order statuses.
         click_data (dict): Data from map click event.
+        time_granularity (str): "Monthly" or "Weekly" - determines if filtering is based on months or weeks.
 
     Returns:
         tuple: filtering message and filter condition.
     """
-    # Convert slider index to corresponding year-month
-    selected_date = month_labels.get(selected_index, None)
+    if time_granularity == "Monthly":
+        selected_index = date_slider_value
+        selected_date = month_labels.get(selected_index, None)
+        if not selected_date:
+            return "No selection", ""
+        filter_end_date = pd.to_datetime(f'{selected_date}-01') + pd.DateOffset(months=1)
+        filter_condition = f'(date_value < "{filter_end_date}")'
+        display_date = selected_date
+    else:  # Weekly
+        start_index, end_index = week_range_value  #Unpack the range slider values
 
-    if not selected_date:
-        return "No selection", ""
-
-    # set end date to proper date
-    filter_end_date = pd.to_datetime(f'{selected_date}-01') + pd.DateOffset(months=1)
-    filter_condition = f'(date_value < "{filter_end_date}")'
+        all_weeks = list(week_labels.values())  # example -  ['2022-03-28/2022-04-03', '2022-04-04/2022-04-10']
+        selected_weeks = all_weeks[start_index:end_index + 1]
+        
+        start_week = week_labels.get(start_index, None)
+        end_week = week_labels.get(end_index, None)
+        
+        if not start_week or not end_week:
+            return "No selection", ""
+        
+        # Filter condition using the list of selected weeks
+        filter_condition = f'(year_week in {selected_weeks})'
+        display_date = f"{start_week[-5:]}-{end_week[-5:]}"
 
     # Apply promotion filter
     if promo_filter:
@@ -61,45 +79,65 @@ def update_filtered_data(selected_index, promo_filter, fulfillment_filter, selec
     # Store the filtered dataset
     filtered_df = df.query(filter_condition)
 
-    return f"Showing {filtered_df['order_count'].sum():,.0f} records up to {selected_date}.", filter_condition
+    return f"Showing {filtered_df['order_count'].sum():,.0f} records for {display_date}.", filter_condition
 
 @callback(
-    Output("metric-1", "children"),  # Revenue metric
-    Output("metric-2", "children"),  # Quantity metric
-    Output("metric-3", "children"),  # Completion rate metric
-    Input("date-slider", "value"),
-    Input("promotion-toggle", "value"),
-    Input("fulfillment-radio", "value"),
-    Input("status-checkbox", "value"),
-    Input("map", "clickData"),
+    [Output("metric-1", "children"),  # Assuming these are the IDs of your metric cards
+     Output("metric-2", "children"),
+     Output("metric-3", "children")],
+    [Input("date-slider", "value"),       # Monthly slider value
+     Input("week-range-slider", "value"), # Week range slider value [start, end]
+     Input("promotion-toggle", "value"),
+     Input("fulfillment-radio", "value"),
+     Input("status-checkbox", "value"),
+     Input("map", "clickData"),
+     Input("time_granularity", "value")]  # Radio button for Monthly/Weekly
 )
-def update_metrics(selected_index, promo_filter, fulfillment_filter, selected_statuses, click_data):
+def update_metrics(date_slider_value, week_range_value, promo_filter, fulfillment_filter, selected_statuses, click_data, time_granularity):
     """
     Update the metric cards dynamically based on all filters.
 
     Args:
-        selected_index (int): Selected index from the date slider.
-        promo_filter (bool): Whether promotion filter is applied.
+        date_slider_value (int): Selected index from the date slider.
+        week_range_value (list): Selected [start, end] week indices from the range slider.
+        promo_filter (bool): Promotion filter toggle value.
         fulfillment_filter (str): Selected fulfillment type.
         selected_statuses (list): List of selected order statuses.
         click_data (dict): Data from map click event.
+        time_granularity (str): "Monthly" or "Weekly" - determines if filtering is based on months or weeks.
 
     Returns:
         tuple: Updated metric contents for revenue, quantity, and completion rate.
     """
-    # Convert slider index to corresponding year-month
-    selected_date = month_labels.get(selected_index, None)
+    if time_granularity == "Monthly":
+        selected_index = date_slider_value
+        selected_date = month_labels.get(selected_index, None)
+        if not selected_date:
+            return dbc.CardBody("N/A"), dbc.CardBody("N/A"), dbc.CardBody("N/A")
+        
+        selected_period = pd.to_datetime(f"{selected_date}-01")
+        previous_period = selected_period - pd.DateOffset(months=1)
+        previous_period_str = previous_period.strftime("%Y-%m")
+        filter_condition = f'year_month == "{selected_date}"'
+        period_type = "month"
+    else:  # Weekly
+        start_index, end_index = week_range_value
+        all_weeks = list(week_labels.values())
+        selected_weeks = all_weeks[start_index:end_index + 1]
+        
+        start_week = week_labels.get(start_index, None)
+        end_week = week_labels.get(end_index, None)
+        if not start_week or not end_week:
+            return dbc.CardBody("N/A"), dbc.CardBody("N/A"), dbc.CardBody("N/A")
+        
+        #for previous period, shift back by one week from the start week
+        prev_index = start_index - 1
+        previous_week = week_labels.get(prev_index, None) if prev_index >= 0 else None
+        previous_period_str = previous_week if previous_week else None
+        filter_condition = f'(year_week in {selected_weeks})'
+        period_type = "week"
 
-    if not selected_date:
-        return dbc.CardBody("N/A"), dbc.CardBody("N/A"), dbc.CardBody("N/A")
-
-    selected_month = pd.to_datetime(f"{selected_date}-01")
-    previous_month = selected_month - pd.DateOffset(months=1)
-    previous_month_str = previous_month.strftime("%Y-%m")
-
-    # Apply filters to dataset
-    filter_condition = f'year_month == "{selected_date}"'
-
+    # Apply additional filters
     if promo_filter:
         filter_condition += ' & (is_promotion == True)'
 
@@ -115,10 +153,10 @@ def update_metrics(selected_index, promo_filter, fulfillment_filter, selected_st
         state = click_data['points'][0]['location']
         filter_condition += f' & (state == "{state}")'
 
-    # Filter dataset for the selected month
+    # Filter dataset for the selected period
     filtered_df = df.query(filter_condition)
 
-    # Compute revenue, quantity, and completion rate for selected month
+    # Compute revenue, quantity, and completion rate for selected period
     revenue_selected = filtered_df["Amount"].sum()
     quantity_selected = filtered_df["Qty"].sum()
 
@@ -126,22 +164,23 @@ def update_metrics(selected_index, promo_filter, fulfillment_filter, selected_st
     completed_orders = filtered_df[filtered_df["Status"].isin(completed_status)]
     completion_rate_selected = (len(completed_orders) / len(filtered_df)) * 100 if len(filtered_df) > 0 else 0
 
-    # Compute the previous month's metrics
-    if previous_month_str in df["year_month"].unique():
-        prev_df = df.query(f'year_month == "{previous_month_str}"')
+    # Compute the previous period's metrics
+    if previous_period_str:
+        if period_type == "month":
+            prev_filter = f'year_month == "{previous_period_str}"'
+        else:  # week
+            prev_filter = f'year_week == "{previous_period_str}"'
 
         if promo_filter:
-            prev_df = prev_df[prev_df["is_promotion"] == True]
-
+            prev_filter += ' & (is_promotion == True)'
         if fulfillment_filter != "Both":
-            prev_df = prev_df[prev_df["Fulfilment"] == fulfillment_filter]
-
+            prev_filter += f' & (Fulfilment == "{fulfillment_filter}")'
         if selected_statuses:
-            prev_df = prev_df[prev_df["Status"].isin(filter_statuses)]
-
+            prev_filter += f' & (Status in [{filter_statuses_str}])'
         if click_data and 'points' in click_data:
-            prev_df = prev_df[prev_df["state"] == state]
+            prev_filter += f' & (state == "{state}")'
 
+        prev_df = df.query(prev_filter)
         revenue_prev = prev_df["Amount"].sum()
         quantity_prev = prev_df["Qty"].sum()
         completed_prev = prev_df[prev_df["Status"].isin(completed_status)]
@@ -159,11 +198,11 @@ def update_metrics(selected_index, promo_filter, fulfillment_filter, selected_st
     def format_mom_change(value):
         abs_value = abs(value)  # Get the absolute value (remove sign)
         if value > 0:
-            return html.Span([f"{abs_value:.1f}% ", "▲ ", " past month"], style={"color": "orange", "font-weight": "bold"})
+            return html.Span([f"{abs_value:.1f}% ", "▲ ", f" past {period_type}"], style={"color": "orange", "font-weight": "bold"})
         elif value < 0:
-            return html.Span([f"{abs_value:.1f}% ", "▼ ", " past month"], style={"color": "skyblue", "font-weight": "bold"})
+            return html.Span([f"{abs_value:.1f}% ", "▼ ", f" past {period_type}"], style={"color": "skyblue", "font-weight": "bold"})
         else:
-            return html.Span([f"{abs_value:.1f}% ", " past month"], style={"color": "gray", "font-weight": "bold"})
+            return html.Span([f"{abs_value:.1f}% ", f" past {period_type}"], style={"color": "gray", "font-weight": "bold"})
 
 
     # **Wrap metrics inside dbc.CardBody()**
@@ -275,22 +314,44 @@ def create_sales_chart(query):
         plotly.graph_objects.Figure: Sales chart figure.
     """
     try:
+        # Apply the filter condition to the DataFrame
         selection = df.query(query)
-        # Group by year_month and sum the Amount
-        selection = selection.groupby('year_month')['Amount'].sum().reset_index()
-        selection['year_month'] = pd.to_datetime(selection['year_month'])
+
+        # Determine if the filter is weekly or monthly based on the query content
+        # If 'year_week' is in the query, assume weekly; otherwise, assume monthly
+        if 'year_week' in query:
+            # Group by year_week and sum the Amount
+            selection = selection.groupby('year_week')['Amount'].sum().reset_index()
+            
+            # For plotting, use the start date of the week range as the x-axis value
+            selection['plot_date'] = selection['year_week'].apply(lambda x: x.split('/')[0])
+            selection['plot_date'] = pd.to_datetime(selection['plot_date'])
+            
+            x_column = 'plot_date'
+            x_label = 'Week Start'
+        else:
+            # Group by year_month and sum the Amount
+            selection = selection.groupby('year_month')['Amount'].sum().reset_index()
+            selection['year_month'] = pd.to_datetime(selection['year_month'])
+            
+            x_column = 'year_month'
+            x_label = 'Month'
+
+        # Create the line chart
         sales = px.line(
             selection,
-            x='year_month',
+            x=x_column,
             y='Amount',
-            labels={'year_month': 'Month', 'Amount': 'Total Sales'},
+            labels={x_column: x_label, 'Amount': 'Total Sales'},
             line_shape='linear'
         )
+
         # Disable pan and zoom
         sales.update_layout(
             xaxis=dict(fixedrange=True),
             yaxis=dict(fixedrange=True)
         )
+
         return sales
     except Exception as e:
         print(f"Error in create_sales_chart: {e}")
@@ -357,3 +418,51 @@ def create_product_chart(query):
     except Exception as e:
         print(f"Error in create_product_chart: {e}")
         return go.Figure(data=[go.Scatter(x=[], y=[], mode='text', text=f"Error: {e}")])
+
+@callback(
+    Output('date-slider-container', 'style'),
+    Output('week-selector-container', 'style'),
+    Output('month-label', 'style'),
+    Output('week-label', 'style'),
+    Input('time_granularity', 'value')
+)
+def toggle_time_selection_visibility(time_granularity):
+    """
+    Toggle visibility of monthly slider and weekly dropdown based on time granularity selection.
+    
+    Args:
+        time_granularity (str): Selected value from the radio buttons ('Monthly' or 'Weekly')
+    
+    Returns:
+        tuple: Styles for date slider container, week selector container, month label, and week label
+    """
+    if time_granularity == 'Monthly':
+        return (
+            {'display': 'block'},  # Show monthly slider
+            {'display': 'none'},   # Hide weekly dropdown
+            {'display': 'block', 'color': '#34495e', 'font-weight': 'bold'},  # Show month label
+            {'display': 'none'}    # Hide week label
+        )
+    else:  # Weekly
+        return (
+            {'display': 'none'},   # Hide monthly slider
+            {'display': 'block'},  # Show weekly dropdown
+            {'display': 'none'},   # Hide month label
+            {'display': 'block', 'color': '#34495e', 'font-weight': 'bold'}  # Show week label
+        )
+
+@callback(
+    Output("sales-chart-header", "children"),
+    Input("time_granularity", "value")
+)
+def update_sales_chart_header(time_granularity):
+    """
+    Update the sales chart header based on the selected time granularity.
+
+    Args:
+        time_granularity (str): "Monthly" or "Weekly" from the radio button.
+
+    Returns:
+        str: Updated header text.
+    """
+    return "Monthly Sales" if time_granularity == "Monthly" else "Weekly Sales"
