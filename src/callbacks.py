@@ -44,14 +44,12 @@ def update_filtered_data(date_slider_value, week_range_value, promo_filter, fulf
         display_date = selected_date
     else:  # Weekly
         start_index, end_index = week_range_value  #Unpack the range slider values
-        print(f"start_index: {start_index}, end_index: {end_index}")
 
         all_weeks = list(week_labels.values())  # example -  ['2022-03-28/2022-04-03', '2022-04-04/2022-04-10']
         selected_weeks = all_weeks[start_index:end_index + 1]
         
         start_week = week_labels.get(start_index, None)
         end_week = week_labels.get(end_index, None)
-        print(f"start_week: {start_week}, end_week: {end_week}")
         
         if not start_week or not end_week:
             return "No selection", ""
