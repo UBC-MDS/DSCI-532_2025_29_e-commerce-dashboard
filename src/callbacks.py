@@ -450,3 +450,19 @@ def toggle_time_selection_visibility(time_granularity):
             {'display': 'none'},   # Hide month label
             {'display': 'block', 'color': '#34495e', 'font-weight': 'bold'}  # Show week label
         )
+
+@callback(
+    Output("sales-chart-header", "children"),
+    Input("time_granularity", "value")
+)
+def update_sales_chart_header(time_granularity):
+    """
+    Update the sales chart header based on the selected time granularity.
+
+    Args:
+        time_granularity (str): "Monthly" or "Weekly" from the radio button.
+
+    Returns:
+        str: Updated header text.
+    """
+    return "Monthly Sales" if time_granularity == "Monthly" else "Weekly Sales"
