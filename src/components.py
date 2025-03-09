@@ -168,6 +168,26 @@ def create_fulfillment_radio():
         )
     ], width=3)
 
+def create_time_radio():
+    """
+    Create the time granularity radio button component for the dashboard.
+    
+    Returns:
+        dbc.Col: Fulfillment radio button component.
+    """         
+    return dbc.Col([
+        dbc.RadioItems(
+            id="time_granularity",
+            options=[
+                {"label": " Monthly", "value": "Monthly"},
+                {"label": " Weekly", "value": "Weekly"}
+            ],
+            value="Monthly",
+            inline=False,
+            className="mt-2"
+        )
+    ], width=3)
+
 def create_status_checkbox(status_mapping):
     """
     Create the status checkbox component for the dashboard.
@@ -201,6 +221,7 @@ def create_filters(month_labels, week_labels, status_mapping):
     """
     date_slider = create_date_slider(month_labels)
     week_selector = create_week_selector(week_labels)
+    time_radio = create_time_radio()
     promotion_toggle = create_promotion_toggle()
     fulfillment_radio = create_fulfillment_radio()
     status_checkbox = create_status_checkbox(status_mapping)
@@ -209,17 +230,10 @@ def create_filters(month_labels, week_labels, status_mapping):
         dbc.Card(
             dbc.CardBody([
                 html.H4("Filters", className="text-center mb-4", style={"font-weight": "bold", "color": "#2c3e50"}),
-
-                dcc.RadioItems(
-                    id='time_granularity',
-                    options=[
-                        {'label': 'Monthly', 'value': 'Monthly'},
-                        {'label': 'Weekly', 'value': 'Weekly'}
-                    ],
-                    value='Monthly',  # Default value
-                    className="mb-3"
-                ),
-
+                
+                html.Label("Time Granularity:", className="fw-bold mt-3", style={"color": "#34495e"}),
+                time_radio,
+                html.Hr(),
                 html.Label("Select Month:", className="fw-bold", style={"color": "#34495e"}, id='month-label'),
                 html.Div(id='date-slider-container', children=date_slider),  # Wrap slider in a Div for styling
                 html.Label("Select Week:", className="fw-bold", style={"color": "#34495e"}, id='week-label'),
