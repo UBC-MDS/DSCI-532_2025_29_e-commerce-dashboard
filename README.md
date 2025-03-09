@@ -91,7 +91,7 @@ conda env update -n e-commerce-dashboard -f environment.yml
 
 3. **Run the App:**
 ```bash
-python src/app.py
+python -m src.app
 ```
 
 Navigate to `http://127.0.0.1:8050/`  (or the specified port) in your browser to see the dashboard. 
