@@ -82,16 +82,16 @@ def update_filtered_data(date_slider_value, week_range_value, promo_filter, fulf
     return f"Showing {filtered_df['order_count'].sum():,.0f} records for {display_date}.", filter_condition
 
 @callback(
-    [Output("metric-1", "children"),  # Assuming these are the IDs of your metric cards
-     Output("metric-2", "children"),
-     Output("metric-3", "children")],
-    [Input("date-slider", "value"),       # Monthly slider value
-     Input("week-range-slider", "value"), # Week range slider value [start, end]
-     Input("promotion-toggle", "value"),
-     Input("fulfillment-radio", "value"),
-     Input("status-checkbox", "value"),
-     Input("map", "clickData"),
-     Input("time_granularity", "value")]  # Radio button for Monthly/Weekly
+    Output("metric-1", "children"),  # Revenue metric
+    Output("metric-2", "children"),  # Quantity metric
+    Output("metric-3", "children"),  # Completion rate metric
+    Input("date-slider", "value"),       # Monthly slider value
+    Input("week-range-slider", "value"), # Week range slider value [start, end]
+    Input("promotion-toggle", "value"),
+    Input("fulfillment-radio", "value"),
+    Input("status-checkbox", "value"),
+    Input("map", "clickData"),
+    Input("time_granularity", "value")  # Radio button for Monthly/Weekly
 )
 def update_metrics(date_slider_value, week_range_value, promo_filter, fulfillment_filter, selected_statuses, click_data, time_granularity):
     """
