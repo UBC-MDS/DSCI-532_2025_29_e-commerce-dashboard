@@ -291,7 +291,7 @@ def create_filters(month_labels, week_labels, status_mapping):
                 status_checkbox,
                 html.Br(),
 
-                html.Div(id="filtered-data", style={"font-size": "8px", "font-style": "italic"})
+                html.Div(id="filtered-data", style={"font-size": "12px", "font-style": "italic"})
             ]),
             className="shadow-sm rounded-3 p-4",
             style={"background-color": "#ffffff", "border": "1px solid #ddd", "width": "350px"}  # Reduced width
@@ -322,7 +322,7 @@ def create_map_graph():
 
 def create_state_summary_graph():
     return dbc.Card([
-        dbc.CardHeader('Title'),
+        dbc.CardHeader('Sales by State'),
         dbc.CardBody(dcc.Graph(id='state_summary', figure={}))
     ])
 
