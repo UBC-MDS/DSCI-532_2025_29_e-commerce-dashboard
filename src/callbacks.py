@@ -56,7 +56,8 @@ def update_filtered_data(date_slider_value, week_range_value, promo_filter, fulf
         
         # Filter condition using the list of selected weeks
         filter_condition = f'(year_week in {selected_weeks})'
-        display_date = f"{start_week[-5:]}-{end_week[-5:]}"
+        display_date = f"{start_week[:10]} to {end_week[-10:]}"
+        #print(f"Start {start_week} to {end_week}")
 
     # Apply promotion filter
     if promo_filter:
