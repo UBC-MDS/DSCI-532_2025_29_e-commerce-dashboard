@@ -228,6 +228,7 @@ def update_metrics(date_slider_value, week_range_value, promo_filter, fulfillmen
 
 @callback(
     Output("map", "figure"),
+    Output("state_summary", "figure"),
     Input("filter_condition", "data"),
     Input("map", "clickData")  # Add clickData input to get the selected state
 )
@@ -241,6 +242,7 @@ def create_map(query, click_data):
 
     Returns:
         plotly.graph_objects.Figure: Map figure.
+        plotly.graph_objects.Figure: Bar chart with per-state sales summary
     """
     states = df['state'].unique()
 
@@ -266,8 +268,14 @@ def create_map(query, click_data):
         color='Amount',
         hover_name='State',
         hover_data={'State': True},
-        color_continuous_scale=px.colors.sequential.Bluyl
+        #color_continuous_scale=px.colors.sequential.Bluyl
     )
+
+    # set a color scale to be shared
+    color_min = state_sales["Amount"].min()
+    color_max = state_sales["Amount"].max()
+    shared_color_axis = dict(colorscale="Bluyl", cmin=color_min, cmax=color_max)
+    fig.update_layout(coloraxis = shared_color_axis)
 
     # Custom hover template
     fig.update_traces(
@@ -296,7 +304,65 @@ def create_map(query, click_data):
         )
     )
 
-    return fig
+    selected_state_names = state_sales[state_sales['selected']]['State'].tolist() 
+    
+    pre_select = state_sales.groupby('State')['Amount'].sum().reset_index()
+
+    # 3 scenarios: 
+    # a. <7 selected (select top 7 - selected)
+    # b. >7 selected ( empty top 7, select top 7 from selected states)
+    MAX_TOP_STATES = 7
+    if (len(selected_state_names)<MAX_TOP_STATES):
+        topn = MAX_TOP_STATES - len(selected_state_names)
+        ordered_states = pre_select.nlargest(topn, ['Amount'], 'first')['State'].tolist() 
+        # ensure selected states are shown
+        ordered_states += selected_state_names
+    else:
+        topn = MAX_TOP_STATES
+        # select top MAX_TOP_STATES from among the selected states
+        ordered_states = (
+            pre_select[pre_select['State'].isin(selected_state_names)].nlargest(
+                topn, ['Amount'], 'first'
+                )['State'].tolist() 
+        )
+    #print('Selected:',  selected_state_names) 
+    #print('Top:',  ordered_states) 
+
+    pre_select['State'] = pre_select['State'].apply(lambda x: x if x in ordered_states else 'Others')      
+    summary_selection = pre_select.groupby('State')['Amount'].sum().reset_index()
+
+    # add 'Others' if in index
+    if ('Others' in summary_selection['State'].values):
+        # append at end to ensure it is displayed last
+        ordered_states.append('Others')
+
+    total_amount = summary_selection['Amount'].sum()
+    summary_selection['Percentage'] = (summary_selection['Amount'] / total_amount)
+    summary_selection['Sales Amount'] = summary_selection['Amount'].apply(lambda x: format_large_num(x))
+    
+    # summarized bar chart
+    summary_bar = px.bar(summary_selection, x = 'Amount', 
+                         y = 'State', color = 'Amount', 
+                         orientation='h',
+                         hover_data={'Sales Amount': True, 
+                                     'Amount': False,
+                                     'Percentage': ':.1%'}, 
+                         #color_continuous_scale=px.colors.sequential.Bluyl                        
+                         )
+    # TODO: manually adjust the color for "Others", if present
+    summary_bar.update_layout(coloraxis = shared_color_axis)
+
+    # y-axis since state names are specified
+    summary_bar.update_layout(xaxis_title = 'Sales Amount', 
+                            yaxis_title = None)
+    # sort by totals
+    summary_bar.update_yaxes(categoryorder = 'array', 
+                            categoryarray = ordered_states[::-1])
+    # hide legend and color axis
+    summary_bar.update_layout(showlegend = False)
+    summary_bar.update_coloraxes(showscale=False)
+
+    return fig, summary_bar
 
 @callback(
     Output("sales", "figure"),
@@ -388,17 +454,6 @@ def create_product_chart(query):
         total_amount = selection['Amount'].sum()
         selection['Percentage'] = (selection['Amount'] / total_amount) * 100
 
-        """
-        product = px.pie(
-            selection,
-            values='Amount',
-            names='Category',
-            title='Product Categories',
-            hover_data=['Amount', 'Percentage'],
-            labels={'Amount': 'Total Amount', 'Percentage': 'Percentage'}
-        )
-        product.update_traces(textposition='inside', textinfo='percent+label')"
-        """
         product = px.bar(selection, x = 'Amount', 
                          y = 'Category', color = 'Category', 
                          orientation='h',

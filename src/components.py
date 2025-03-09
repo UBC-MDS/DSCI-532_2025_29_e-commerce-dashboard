@@ -322,7 +322,7 @@ def create_map_graph():
 
 def create_state_summary_graph():
     return dbc.Card([
-        dbc.CardHeader('Title'),
+        dbc.CardHeader('Sales by State'),
         dbc.CardBody(dcc.Graph(id='state_summary', figure={}))
     ])
 
