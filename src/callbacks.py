@@ -316,22 +316,44 @@ def create_sales_chart(query):
         plotly.graph_objects.Figure: Sales chart figure.
     """
     try:
+        # Apply the filter condition to the DataFrame
         selection = df.query(query)
-        # Group by year_month and sum the Amount
-        selection = selection.groupby('year_month')['Amount'].sum().reset_index()
-        selection['year_month'] = pd.to_datetime(selection['year_month'])
+
+        # Determine if the filter is weekly or monthly based on the query content
+        # If 'year_week' is in the query, assume weekly; otherwise, assume monthly
+        if 'year_week' in query:
+            # Group by year_week and sum the Amount
+            selection = selection.groupby('year_week')['Amount'].sum().reset_index()
+            
+            # For plotting, use the start date of the week range as the x-axis value
+            selection['plot_date'] = selection['year_week'].apply(lambda x: x.split('/')[0])
+            selection['plot_date'] = pd.to_datetime(selection['plot_date'])
+            
+            x_column = 'plot_date'
+            x_label = 'Week Start'
+        else:
+            # Group by year_month and sum the Amount
+            selection = selection.groupby('year_month')['Amount'].sum().reset_index()
+            selection['year_month'] = pd.to_datetime(selection['year_month'])
+            
+            x_column = 'year_month'
+            x_label = 'Month'
+
+        # Create the line chart
         sales = px.line(
             selection,
-            x='year_month',
+            x=x_column,
             y='Amount',
-            labels={'year_month': 'Month', 'Amount': 'Total Sales'},
+            labels={x_column: x_label, 'Amount': 'Total Sales'},
             line_shape='linear'
         )
+
         # Disable pan and zoom
         sales.update_layout(
             xaxis=dict(fixedrange=True),
             yaxis=dict(fixedrange=True)
         )
+
         return sales
     except Exception as e:
         print(f"Error in create_sales_chart: {e}")
