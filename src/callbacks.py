@@ -316,8 +316,10 @@ def create_map(query, click_data):
     if (len(selected_state_names)<MAX_TOP_STATES):
         topn = MAX_TOP_STATES - len(selected_state_names)
         ordered_states = pre_select.nlargest(topn, ['Amount'], 'first')['State'].tolist() 
-        # ensure selected states are shown
-        ordered_states += selected_state_names
+        # ensure selected states are shown, but only if not already included
+        missing_selected = set(selected_state_names).difference(set(ordered_states))
+        if len(missing_selected) > 0:
+            ordered_states += list(selected_state_names)
     else:
         topn = MAX_TOP_STATES
         # select top MAX_TOP_STATES from among the selected states
