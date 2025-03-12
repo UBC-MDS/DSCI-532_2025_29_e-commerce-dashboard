@@ -4,15 +4,15 @@ import geopandas as gpd
 # Import sales data for dashboard
 def import_data(url):
     """
-    Import and preprocess sales data from a CSV file.
+    Import and preprocess sales data from a parquet file.
 
     Args:
-        url (str): URL or file path to the CSV file.
+        url (str): URL or file path to the parquet file.
 
     Returns:
         pd.DataFrame: Preprocessed sales data.
     """
-    df = pd.read_csv(url, nrows=None)
+    df = pd.read_parquet(url)
     # add a filterable date_value for the 1st of the month
     df['date_value'] = pd.to_datetime(df['year_month'] + '-01')
     return df
