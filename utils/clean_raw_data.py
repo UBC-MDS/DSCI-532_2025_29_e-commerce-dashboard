@@ -37,21 +37,16 @@ state_mapping = {
 df['state'] = df['state'].replace(state_mapping)
 
 # summarize the data by grouping along the dimensions that will be queried/filtered
-sample_df = df.groupby(['year_month', 'year_week', 
+# only use data from April 1. March data is very limited/incomplete
+summarized_df = df[df['Date']>='2022-04-01'].groupby(['year_month', 'year_week', 
             'Status', 'Fulfilment', 'Category', 
             'state', 'is_promotion',]).agg(
                 # and aggregate the metrics that will be shown
                 {'Qty': 'sum', 'Order ID': 'size', 'Amount': 'sum'}
-                ).reset_index().sample(frac=0.5, 
-                                       replace=False, 
-                                       random_state=532)
+                ).reset_index()
 
 # rename Order ID summary as order_count
-sample_df.rename(columns={'Order ID': 'order_count'}, inplace=True)
+summarized_df.rename(columns={'Order ID': 'order_count'}, inplace=True)
 
-# output data
-output_path = 'data'
-output_file = 'amazon_sample'
-compression_options = dict(method='zip', archive_name=f'{output_file}.csv')
-sample_df.to_csv(os.path.join(output_path, f'{output_file}.zip'), 
-                 compression = compression_options)
+# save to parquet file
+summarized_df.to_parquet('data/amazon_in_sales.parquet', index=False)
