@@ -98,7 +98,7 @@ def preprocess_data(df):
 
     # Compute Completed Orders Percentage
     completed_status = ["Shipped", "Shipped - Delivered to Buyer", "Shipped - Picked Up", "Shipped - Out for Delivery"]
-    df.loc[:, "order_status_category"] = df["Status"].apply(lambda x: "Completed" if x in completed_status else "Uncompleted")
+    df.loc[:, "order_status_category"] = df["Status"].where(df["Status"].isin(completed_status), "Uncompleted")
 
     monthly_counts = df.groupby("year_month")["order_status_category"].count()
     completed_counts = df[df["order_status_category"] == "Completed"].groupby("year_month")["order_status_category"].count()

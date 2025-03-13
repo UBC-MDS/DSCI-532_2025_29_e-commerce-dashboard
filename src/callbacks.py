@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import dash_bootstrap_components as dbc
 from dash import Input, Output, callback
-from .app import df, month_labels, week_labels, status_mapping, india
+from .app import df, month_labels, week_labels, status_mapping, india, cache
 from .components import format_large_num, format_indian_rupees
 
 @callback(
@@ -227,6 +227,7 @@ def update_metrics(date_slider_value, week_range_value, promo_filter, fulfillmen
 
     return metric_1_content, metric_2_content, metric_3_content
 
+@cache.memoize()
 @callback(
     Output("map", "figure"),
     Output("state_summary", "figure"),
@@ -258,7 +259,9 @@ def create_map(query, click_data):
     state_sales = all_states.merge(state_sales, on='state', how='left').fillna(0)
 
     # Add a column to indicate whether the state is selected
-    state_sales['selected'] = state_sales['state'].apply(lambda x: x == click_data['points'][0]['location'] if click_data and 'points' in click_data else False)
+    state_sales['selected'] = False
+    if click_data and 'points' in click_data:
+        state_sales.loc[state_sales['state'] == click_data['points'][0]['location'], 'selected'] = True
     state_sales.rename(columns={'state' : 'State'}, inplace=True)
 
     fig = px.choropleth(
@@ -272,20 +275,15 @@ def create_map(query, click_data):
         #color_continuous_scale=px.colors.sequential.Bluyl
     )
 
-    # set a color scale to be shared
-    color_min = state_sales["Amount"].min()
-    color_max = state_sales["Amount"].max()
-    shared_color_axis = dict(colorscale="Bluyl", cmin=color_min, cmax=color_max)
-    fig.update_layout(coloraxis = shared_color_axis)
-
     # Custom hover template
     fig.update_traces(
-        hovertemplate="<b>%{hovertext}</b>",
-        hovertext=state_sales['State'] + '<br>Amount: ₹' + state_sales['Amount'].apply(lambda x: f'{x/1e6:.1f}M' if x >= 1e6 else f'{x/1e3:.1f}K' if x >= 1e3 else f'{x:.0f}')
+        hovertemplate="%{hovertext}",
+        hovertext=state_sales['State'] + '<br>Amount: ₹' + state_sales['Amount'].apply(lambda x: f'{x/1e6:.1f}M' if x >= 1e6 else f'{x/1e3:.1f}K' if x >= 1e3 else f'{x:.0f}'),
     )
 
     # Highlight the selected state
-    fig.update_traces(marker_line_width=state_sales['selected'].apply(lambda x: 3 if x else 1),
+    marker_line_width = state_sales['selected'].map({True: 3, False: 1})
+    fig.update_traces(marker_line_width=marker_line_width,
                       marker_line_color='black')
 
     fig.update_geos(
@@ -297,16 +295,21 @@ def create_map(query, click_data):
     )
     fig.update_layout(
         modebar=dict(remove=['select', 'lasso2d']),
-        margin={"r":0,"t":50,"l":0,"b":0},
+        margin={"r":0,"t":20,"l":0,"b":0},
         coloraxis_colorbar=dict(
-            x=-0.1,  # Move color scale to the left
+            x=-0.1,
+            y=0.5,
             title="Sales",
             ticks="outside"
         )
     )
 
     selected_state_names = state_sales[state_sales['selected']]['State'].tolist() 
-    
+    # set a color scale to be shared
+    color_min = state_sales["Amount"].min()
+    color_max = state_sales["Amount"].max()
+    shared_color_axis = dict(colorscale="Bluyl", cmin=color_min, cmax=color_max)
+    fig.update_layout(coloraxis = shared_color_axis)
     pre_select = state_sales.groupby('State')['Amount'].sum().reset_index()
 
     # 3 scenarios: 
@@ -331,7 +334,8 @@ def create_map(query, click_data):
     #print('Selected:',  selected_state_names) 
     #print('Top:',  ordered_states) 
 
-    pre_select['State'] = pre_select['State'].apply(lambda x: x if x in ordered_states else 'Others')      
+    # Replace apply with vectorized operation
+    pre_select['State'] = pre_select['State'].map(lambda x: x if x in ordered_states else 'Others')      
     summary_selection = pre_select.groupby('State')['Amount'].sum().reset_index()
 
     # add 'Others' if in index
@@ -341,7 +345,7 @@ def create_map(query, click_data):
 
     total_amount = summary_selection['Amount'].sum()
     summary_selection['Percentage'] = (summary_selection['Amount'] / total_amount)
-    summary_selection['Sales Amount'] = summary_selection['Amount'].apply(lambda x: format_large_num(x))
+    summary_selection['Sales Amount'] = summary_selection['Amount'].map(format_large_num)
     
     # summarized bar chart
     summary_bar = px.bar(summary_selection, x = 'Amount', 
@@ -362,11 +366,13 @@ def create_map(query, click_data):
     summary_bar.update_yaxes(categoryorder = 'array', 
                             categoryarray = ordered_states[::-1])
     # hide legend and color axis
-    summary_bar.update_layout(showlegend = False)
+    summary_bar.update_layout(showlegend = False, 
+                              margin={"r":0,"t":30,"l":0,"b":0})
     summary_bar.update_coloraxes(showscale=False)
 
     return fig, summary_bar
 
+@cache.memoize()
 @callback(
     Output("sales", "figure"),
     Input("filter_condition", "data")
@@ -393,7 +399,7 @@ def create_sales_chart(query):
             selection = selection.groupby('year_week')['Amount'].sum().reset_index()
             
             # For plotting, use the start date of the week range as the x-axis value
-            selection['plot_date'] = selection['year_week'].apply(lambda x: x.split('/')[0])
+            selection['plot_date'] = selection['year_week'].str.split('/').str[0]
             selection['plot_date'] = pd.to_datetime(selection['plot_date'])
             
             x_column = 'plot_date'
@@ -418,7 +424,8 @@ def create_sales_chart(query):
         # Disable pan and zoom
         sales.update_layout(
             xaxis=dict(fixedrange=True),
-            yaxis=dict(fixedrange=True)
+            yaxis=dict(fixedrange=True),
+            margin={"r":0,"t":30,"l":0,"b":0},
         )
 
         return sales
@@ -426,6 +433,7 @@ def create_sales_chart(query):
         print(f"Error in create_sales_chart: {e}")
         return go.Figure(data=[go.Scatter(x=[], y=[], mode='text', text=f"Error: {e}")])
 
+@cache.memoize()
 @callback(
     Output("product", "figure"),
     Input("filter_condition", "data")
@@ -446,7 +454,7 @@ def create_product_chart(query):
 
         # get the top 5, merge the rest to 'others'
         ordered_categories = pre_select.nlargest(5, ['Amount'], 'first')['Category'].tolist()  
-        pre_select['Category'] = pre_select['Category'].apply(lambda x: x if x in ordered_categories else 'Others')      
+        pre_select['Category'] = pre_select['Category'].where(pre_select['Category'].isin(ordered_categories), 'Others')      
         selection = pre_select.groupby('Category')['Amount'].sum().reset_index()
 
         # add 'Others' if in index (it is possible, some will have <5 categories)
@@ -466,7 +474,8 @@ def create_product_chart(query):
         # hide legend and y-axis since Category names are specified
         product.update_layout(showlegend = False)
         product.update_layout(xaxis_title = 'Sales Amount', 
-                              yaxis_title = None)
+                              yaxis_title = None,
+                              margin={"r":0,"t":30,"l":0,"b":0})
         # sort by totals
         #product.update_layout(yaxis={'categoryorder':'total ascending'})
         product.update_yaxes(categoryorder = 'array', 
