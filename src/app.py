@@ -2,6 +2,7 @@ import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc
 from .data import import_data, import_geojson, preprocess_data
 from .components import create_title, create_footer, create_filters, create_metrics, create_visuals
+from flask_caching import Cache
 
 # Initialize the app
 app = Dash(
@@ -41,9 +42,17 @@ app.layout = dbc.Container([
     footer], 
     fluid=True)
 
+cache = Cache(
+    app.server,
+    config={
+        'CACHE_TYPE': 'filesystem',
+        'CACHE_DIR': 'tmp'
+    }
+)
+
 # Import callbacks to register them with the app
 from . import callbacks
 
 # Run the app/dashboard
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
