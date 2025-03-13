@@ -227,7 +227,7 @@ def update_metrics(date_slider_value, week_range_value, promo_filter, fulfillmen
 
     return metric_1_content, metric_2_content, metric_3_content
 
-# @cache.memoize()
+@cache.memoize()
 @callback(
     Output("map", "figure"),
     Output("state_summary", "figure"),
