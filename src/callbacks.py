@@ -283,6 +283,39 @@ def create_map(query, click_data):
     query_parts = [part for part in query_parts if not part.startswith('(state ==')]
     modified_query = ' & '.join(query_parts)
     state_sales = df.query(modified_query).groupby('state')['Amount'].sum().reset_index()
+    
+    if state_sales.empty:
+        fig = go.Figure()
+        fig.add_annotation(
+            text="No sales data available for the selected state.",
+            x=0.5, y=0.5,
+            xref="paper", yref="paper",
+            showarrow=False,
+            font=dict(size=16)
+        )
+        fig.update_layout(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            template="plotly_white"
+        )
+        
+        # Also return an empty state summary figure
+        state_summary = go.Figure()
+        state_summary.add_annotation(
+            text="No state-wise sales data available.",
+            x=0.5, y=0.5,
+            xref="paper", yref="paper",
+            showarrow=False,
+            font=dict(size=16)
+        )
+        state_summary.update_layout(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            template="plotly_white"
+        )
+        
+        return fig, state_summary
+
 
     # Populate states with no data with 0
     all_states = pd.DataFrame({'state': states})
@@ -367,6 +400,7 @@ def create_map(query, click_data):
     # Replace apply with vectorized operation
     pre_select['State'] = pre_select['State'].map(lambda x: x if x in ordered_states else 'Others')      
     summary_selection = pre_select.groupby('State')['Amount'].sum().reset_index()
+    
 
     # add 'Others' if in index
     if ('Others' in summary_selection['State'].values):
@@ -421,6 +455,21 @@ def create_sales_chart(query):
     try:
         # Apply the filter condition to the DataFrame
         selection = df.query(query)
+        if selection.empty:
+            fig = go.Figure()
+            fig.add_annotation(
+                text="No sales data available for the selected filters.",
+                x=0.5, y=0.5,
+                xref="paper", yref="paper",
+                showarrow=False,
+                font=dict(size=16)
+            )
+            fig.update_layout(
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                template="plotly_white"
+            )
+            return fig
 
         # Determine if the filter is weekly or monthly based on the query content
         # If 'year_week' is in the query, assume weekly; otherwise, assume monthly
@@ -481,6 +530,21 @@ def create_product_chart(query):
     """
     try:
         pre_select = df.query(query).groupby('Category')['Amount'].sum().reset_index()
+        if pre_select.empty:
+            fig = go.Figure()
+            fig.add_annotation(
+                text="No product sales data available.",
+                x=0.5, y=0.5,
+                xref="paper", yref="paper",
+                showarrow=False,
+                font=dict(size=16)
+            )
+            fig.update_layout(
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                template="plotly_white"
+            )
+            return fig
 
         # get the top 5, merge the rest to 'others'
         ordered_categories = pre_select.nlargest(5, ['Amount'], 'first')['Category'].tolist()  
