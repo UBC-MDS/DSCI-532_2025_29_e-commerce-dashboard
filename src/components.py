@@ -78,14 +78,8 @@ def format_indian_rupees(amount):
     # Add rupee symbol and handle negative numbers
     return f"₹{'-' + formatted_amount if amount < 0 else formatted_amount}"
 
-def create_title():
-    """
-    Create the title component for the dashboard.
-    
-    Returns:
-        dbc.Row: Title component.
-    """
-    return dbc.Row(html.H1("Amazon Sales Dashboard"), className="bg-secondary text-black p-2 mb-4 text-center", id='title')
+
+
 
 def format_mom_change(value):
     """
@@ -127,23 +121,24 @@ def create_footer():
 
 def create_date_slider(month_labels):
     """
-    Create the date slider component for the dashboard.
-    
+    Create the date slider component for selecting a range of months.
+
     Args:
         month_labels (dict): Mapping of month labels for the date slider.
-    
+
     Returns:
-        dcc.Slider: Date slider component.
+        dcc.RangeSlider: Range slider component.
     """
-    return dcc.Slider(
+    return dcc.RangeSlider(
         id="date-slider",
         min=0,
         max=len(month_labels) - 1,
-        value=len(month_labels) - 1,  # Default: latest month
-        marks={i: label for i, label in month_labels.items()},
-        step=None,
+        value=[0, len(month_labels) - 1],  # Default: full range selection
+        marks={i: {"label": label, "style": {"color": "white"}} for i, label in month_labels.items()},
+        step=1,
         tooltip={"placement": "bottom", "always_visible": True},
     )
+
 
 def create_week_selector(week_labels):
     """
@@ -160,6 +155,7 @@ def create_week_selector(week_labels):
         id="week-range-slider",
         min=0,
         max=max_index,
+        marks={i: {"label": str(i), "style": {"color": "white"}} for i in week_labels.keys()},
         step=1,
         value=[3, 9],  # Default range
         tooltip={"placement": "bottom", "always_visible": True}
@@ -268,35 +264,45 @@ def create_filters(month_labels, week_labels, status_mapping):
     return dbc.Col([
         dbc.Card(
             dbc.CardBody([
-                html.H4("Filters", className="text-center mb-4", style={"font-weight": "bold", "color": "#2c3e50"}),
-                
-                html.Label("Time Granularity:", className="fw-bold mt-3", style={"color": "#34495e"}),
+                html.H2("Amazon Sales Dashboard", className="text-center mb-4", 
+                        style={"color": "white", "font-weight": "bold"}),
+
+                html.Label("Time Granularity:", className="fw-bold mt-3", style={"color": "white", "font-size": "15px"}),
                 time_radio,
-                html.Hr(),
-                html.Label("Select Month:", className="fw-bold", style={"color": "#34495e"}, id='month-label'),
-                html.Div(id='date-slider-container', children=date_slider),  # Wrap slider in a Div for styling
-                html.Label("Select Week:", className="fw-bold", style={"color": "#34495e"}, id='week-label'),
-                html.Div(id='week-selector-container', children=week_selector, style={'display': 'none'}),  # Initially hidden
-                html.Hr(),
+                html.Hr(style={"border-top": "1px solid white"}),
 
-                html.Label("Promotions Only:", className="fw-bold mt-3", style={"color": "#34495e"}),
+                html.Label("Select Monthly Range:", className="fw-bold", style={"color": "white !important"}, id='month-label'),
+                html.Div(id='date-slider-container', children=date_slider),
+                html.Label("Select Weekly Range:", className="fw-bold", style={"color": "white !important"}, id='week-label'),
+                html.Div(id='week-selector-container', children=week_selector, style={'display': 'none'}),
+                html.Hr(style={"border-top": "1px solid white"}),
+
+                html.Label("Promotions Only:", className="fw-bold mt-3", style={"color": "white"}),
                 promotion_toggle,
-                html.Hr(),
+                html.Hr(style={"border-top": "1px solid white"}),
 
-                html.Label("Fulfillment Type:", className="fw-bold mt-3", style={"color": "#34495e"}),
+                html.Label("Fulfillment Type:", className="fw-bold mt-3", style={"color": "white"}),
                 fulfillment_radio,
-                html.Hr(),
+                html.Hr(style={"border-top": "1px solid white"}),
 
-                html.Label("Order Status:", className="fw-bold mt-3", style={"color": "#34495e"}),
+                html.Label("Order Status:", className="fw-bold mt-3", style={"color": "white"}),
                 status_checkbox,
                 html.Br(),
 
-                html.Div(id="filtered-data", style={"font-size": "12px", "font-style": "italic"})
+                html.Div(id="filtered-data", style={"font-size": "12px", "font-style": "italic", "color": "white"})
             ]),
             className="shadow-sm rounded-3 p-4",
-            style={"background-color": "#ffffff", "border": "1px solid #ddd", "width": "350px"}  # Reduced width
+            style={
+                "background-color": "#2C3E50",  # Dark blue background
+                "border": "none",
+                "width": "320px",  # Adjust width
+                "color": "white",
+                "height": "100vh"  # Make it full height
+            }
         )
-    ], width="auto", className="d-flex justify-content-center")
+    ], width="auto", style={"padding-right": "10px"})  # Reduce gap between filters and charts
+
+        
 
 def create_metrics():
     """
@@ -318,25 +324,25 @@ def create_map_graph():
     return dbc.Card([
         dbc.CardHeader('Map of India'),
         dbc.CardBody(dcc.Graph(id='map', figure={}))
-        ]) 
+        ], style={"margin-top": "5px"}) 
 
 def create_state_summary_graph():
     return dbc.Card([
         dbc.CardHeader('Sales by State'),
         dbc.CardBody(dcc.Graph(id='state_summary', figure={}))
-    ])
+    ], style={"margin-top": "5px"})
 
 def create_sales_graph():
     return dbc.Card([
         dbc.CardHeader(id='sales-chart-header', children='Monthly Sales'),
         dbc.CardBody(dcc.Graph(id='sales', figure={})), 
-    ], style={"margin-top": "15px"}) 
+    ], style={"margin-top": "5px"}) 
 
 def create_product_graph():
     return dbc.Card([
         dbc.CardHeader('Sales Breakdown'),
         dbc.CardBody(dcc.Graph(id='product', figure={}))
-    ], style={"margin-top": "15px"}) 
+    ], style={"margin-top": "5px"}) 
 
 def create_visuals():
     return dbc.Row([

@@ -35,13 +35,16 @@ def update_filtered_data(date_slider_value, week_range_value, promo_filter, fulf
         tuple: filtering message and filter condition.
     """
     if time_granularity == "Monthly":
-        selected_index = date_slider_value
-        selected_date = month_labels.get(selected_index, None)
-        if not selected_date:
+        start_index, end_index = date_slider_value  # Now using a range
+        all_months = list(month_labels.values())
+
+        if start_index is None or end_index is None or start_index < 0 or end_index >= len(all_months):
             return "No selection", ""
-        filter_end_date = pd.to_datetime(f'{selected_date}-01') + pd.DateOffset(months=1)
-        filter_condition = f'(date_value < "{filter_end_date}")'
-        display_date = selected_date
+
+        selected_months = all_months[start_index:end_index + 1]  # Get range
+        filter_condition = f'(year_month in {selected_months})'
+        display_date = f"{selected_months[0]} to {selected_months[-1]}"
+
     else:  # Weekly
         start_index, end_index = week_range_value  #Unpack the range slider values
 
@@ -98,58 +101,42 @@ def update_metrics(date_slider_value, week_range_value, promo_filter, fulfillmen
     """
     Update the metric cards dynamically based on all filters.
 
-    Args:
-        date_slider_value (int): Selected index from the date slider.
-        week_range_value (list): Selected [start, end] week indices from the range slider.
-        promo_filter (bool): Promotion filter toggle value.
-        fulfillment_filter (str): Selected fulfillment type.
-        selected_statuses (list): List of selected order statuses.
-        click_data (dict): Data from map click event.
-        time_granularity (str): "Monthly" or "Weekly" - determines if filtering is based on months or weeks.
-
     Returns:
         tuple: Updated metric contents for revenue, quantity, and completion rate.
     """
     if time_granularity == "Monthly":
-        selected_index = date_slider_value
-        selected_date = month_labels.get(selected_index, None)
-        if not selected_date:
+        start_index, end_index = date_slider_value  # Now using a range
+        all_months = list(month_labels.values())
+
+        if start_index is None or end_index is None or start_index < 0 or end_index >= len(all_months):
             return dbc.CardBody("N/A"), dbc.CardBody("N/A"), dbc.CardBody("N/A")
-        
-        selected_period = pd.to_datetime(f"{selected_date}-01")
-        previous_period = selected_period - pd.DateOffset(months=1)
-        previous_period_str = previous_period.strftime("%Y-%m")
-        filter_condition = f'year_month == "{selected_date}"'
+
+        selected_months = all_months[start_index:end_index + 1]  # Get range
+        filter_condition = f'(year_month in {selected_months})'
         period_type = "month"
+
     else:  # Weekly
         start_index, end_index = week_range_value
         all_weeks = list(week_labels.values())
         selected_weeks = all_weeks[start_index:end_index + 1]
-        
+
         start_week = week_labels.get(start_index, None)
         end_week = week_labels.get(end_index, None)
         if not start_week or not end_week:
             return dbc.CardBody("N/A"), dbc.CardBody("N/A"), dbc.CardBody("N/A")
-        
-        #for previous period, shift back by one week from the start week
-        prev_index = start_index - 1
-        previous_week = week_labels.get(prev_index, None) if prev_index >= 0 else None
-        previous_period_str = previous_week if previous_week else None
+
         filter_condition = f'(year_week in {selected_weeks})'
         period_type = "week"
 
     # Apply additional filters
     if promo_filter:
         filter_condition += ' & (is_promotion == True)'
-
     if fulfillment_filter != "Both":
         filter_condition += f' & (Fulfilment == "{fulfillment_filter}")'
-
     if selected_statuses:
         filter_statuses = [item for key, values in status_mapping.items() for item in values if key in selected_statuses]
         filter_statuses_str = ', '.join([f'"{status}"' for status in filter_statuses])
         filter_condition += f' & (Status in [{filter_statuses_str}])'
-
     if click_data and 'points' in click_data:
         state = click_data['points'][0]['location']
         filter_condition += f' & (state == "{state}")'
@@ -157,7 +144,7 @@ def update_metrics(date_slider_value, week_range_value, promo_filter, fulfillmen
     # Filter dataset for the selected period
     filtered_df = df.query(filter_condition)
 
-    # Compute revenue, quantity, and completion rate for selected period
+    # Compute revenue, quantity, and completion rate
     revenue_selected = filtered_df["Amount"].sum()
     quantity_selected = filtered_df["Qty"].sum()
 
@@ -165,67 +152,110 @@ def update_metrics(date_slider_value, week_range_value, promo_filter, fulfillmen
     completed_orders = filtered_df[filtered_df["Status"].isin(completed_status)]
     completion_rate_selected = (len(completed_orders) / len(filtered_df)) * 100 if len(filtered_df) > 0 else 0
 
-    # Compute the previous period's metrics
-    if previous_period_str:
-        if period_type == "month":
-            prev_filter = f'year_month == "{previous_period_str}"'
-        else:  # week
-            prev_filter = f'year_week == "{previous_period_str}"'
+    def calculate_cagr(begin, end, time_years):
+        """Calculate the Compound Annual Growth Rate (CAGR)."""
+        if begin == 0:
+            return None  # Prevent division by zero
+        if time_years > 0:
+            return ((end / begin) ** (1 / time_years) - 1) * 100
+        return 0  # Default if time period is invalid
 
-        if promo_filter:
-            prev_filter += ' & (is_promotion == True)'
-        if fulfillment_filter != "Both":
-            prev_filter += f' & (Fulfilment == "{fulfillment_filter}")'
-        if selected_statuses:
-            prev_filter += f' & (Status in [{filter_statuses_str}])'
-        if click_data and 'points' in click_data:
-            prev_filter += f' & (state == "{state}")'
+    # Extract the first and last period for CAGR calculation
+    if time_granularity == "Monthly":
+        start_index, end_index = date_slider_value
+        all_months = list(month_labels.values())
 
-        prev_df = df.query(prev_filter)
-        revenue_prev = prev_df["Amount"].sum()
-        quantity_prev = prev_df["Qty"].sum()
-        completed_prev = prev_df[prev_df["Status"].isin(completed_status)]
-        completion_rate_prev = (len(completed_prev) / len(prev_df)) * 100 if len(prev_df) > 0 else 0
+        # Ensure indices are valid
+        if start_index is None or end_index is None or start_index < 0 or end_index >= len(all_months):
+            return dbc.CardBody("N/A"), dbc.CardBody("N/A"), dbc.CardBody("N/A")
 
-        revenue_mom_change = ((revenue_selected - revenue_prev) / revenue_prev) * 100 if revenue_prev > 0 else 0
-        quantity_mom_change = ((quantity_selected - quantity_prev) / quantity_prev) * 100 if quantity_prev > 0 else 0
-        completion_rate_mom_change = ((completion_rate_selected - completion_rate_prev) / completion_rate_prev) * 100 if completion_rate_prev > 0 else 0
-    else:
-        revenue_mom_change = 0
-        quantity_mom_change = 0
-        completion_rate_mom_change = 0
+        selected_months = all_months[start_index:end_index + 1]  # Get all months in range
 
-    # **Set color and arrow indicators**
-    def format_mom_change(value):
-        abs_value = abs(value)  # Get the absolute value (remove sign)
+        # First and last months in the selected range
+        # Apply the same filters to the dataset before calculating CAGR
+        filtered_df_cagr = df.query(filter_condition)
+
+        revenue_begin = filtered_df_cagr[filtered_df_cagr["year_month"] == selected_months[0]]["Amount"].sum()
+        revenue_end = filtered_df_cagr[filtered_df_cagr["year_month"] == selected_months[-1]]["Amount"].sum()
+
+
+        quantity_begin = filtered_df_cagr[filtered_df_cagr["year_month"] == selected_months[0]]["Qty"].sum()
+        quantity_end = filtered_df_cagr[filtered_df_cagr["year_month"] == selected_months[-1]]["Qty"].sum()
+
+        completed_begin = filtered_df_cagr[
+            (filtered_df_cagr["year_month"] == selected_months[0]) & 
+            (filtered_df_cagr["Status"].isin(completed_status))
+        ]
+        completed_end = filtered_df_cagr[
+            (filtered_df_cagr["year_month"] == selected_months[-1]) & 
+            (filtered_df_cagr["Status"].isin(completed_status))
+        ]
+        total_orders_begin = filtered_df_cagr[filtered_df_cagr["year_month"] == selected_months[0]]["Status"].count()
+        total_orders_end = filtered_df_cagr[filtered_df_cagr["year_month"] == selected_months[-1]]["Status"].count()
+
+
+
+    elif time_granularity == "Weekly":
+        filtered_df_cagr = df.query(filter_condition)
+
+        revenue_begin = filtered_df_cagr[filtered_df_cagr["year_week"] == selected_weeks[0]]["Amount"].sum()
+        revenue_end = filtered_df_cagr[filtered_df_cagr["year_week"] == selected_weeks[-1]]["Amount"].sum()
+
+        quantity_begin = filtered_df_cagr[filtered_df_cagr["year_week"] == selected_weeks[0]]["Qty"].sum()
+        quantity_end = filtered_df_cagr[filtered_df_cagr["year_week"] == selected_weeks[-1]]["Qty"].sum()
+
+        completed_begin = filtered_df_cagr[(df["year_week"] == selected_weeks[0]) & filtered_df_cagr["Status"].isin(completed_status)]
+        completed_end = filtered_df_cagr[(df["year_week"] == selected_weeks[-1]) & filtered_df_cagr["Status"].isin(completed_status)]
+
+        total_orders_begin = filtered_df_cagr[filtered_df_cagr["year_week"] == selected_weeks[0]]["Status"].count()
+        total_orders_end = filtered_df_cagr[filtered_df_cagr["year_week"] == selected_weeks[-1]]["Status"].count()
+
+    # Convert selected range to years
+    time_years = (end_index - start_index + 1) / 12 if time_granularity == "Monthly" else (end_index - start_index + 1) / 52
+
+    # Compute CAGR for each metric
+    revenue_cagr = calculate_cagr(revenue_begin, revenue_end, time_years)
+    quantity_cagr = calculate_cagr(quantity_begin, quantity_end, time_years)
+
+    # Compute Completion Rate Growth
+    completion_rate_begin = (len(completed_begin) / total_orders_begin) * 100 if total_orders_begin > 0 else 0
+    completion_rate_end = (len(completed_end) / total_orders_end) * 100 if total_orders_end > 0 else 0
+    completion_rate_cagr = calculate_cagr(completion_rate_begin, completion_rate_end, time_years)
+
+    # Set color and arrow indicators
+    def format_cagr_change(value):
+        """Format CAGR percentage with appropriate color and icon."""
+        if value is None:
+            return html.Span(["N/A"], style={"color": "gray", "font-weight": "bold"})
+        abs_value = abs(value)
         if value > 0:
-            return html.Span([f"{abs_value:.1f}% ", "▲ ", f" past {period_type}"], style={"color": "orange", "font-weight": "bold"})
+            return html.Span([f"{abs_value:.1f}% ", "▲ ", "Growth Rate"], style={"color": "orange", "font-weight": "bold"})
         elif value < 0:
-            return html.Span([f"{abs_value:.1f}% ", "▼ ", f" past {period_type}"], style={"color": "skyblue", "font-weight": "bold"})
+            return html.Span([f"{abs_value:.1f}% ", "▼ ", "Growth Rate"], style={"color": "skyblue", "font-weight": "bold"})
         else:
-            return html.Span([f"{abs_value:.1f}% ", f" past {period_type}"], style={"color": "gray", "font-weight": "bold"})
+            return html.Span(["No Growth"], style={"color": "gray", "font-weight": "bold"})
 
-
-    # **Wrap metrics inside dbc.CardBody()**
+    # Wrap metrics inside dbc.CardBody()
     metric_1_content = dbc.CardBody([
-        html.H3("Revenue", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
-        html.H1(format_indian_rupees(revenue_selected), className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
-        html.Small(format_mom_change(revenue_mom_change), className="card-text text-muted", style={"font-size": "14px"})
-    ])
+        html.Label("Revenue", className="card-title", style={"fontsize":"20px"}),
+        html.H4(format_indian_rupees(revenue_selected), className="card-text"),
+        html.Small(format_cagr_change(revenue_cagr), className="card-text text-muted")
+    ], style={"margin": "1px", "padding": "1px"})
 
     metric_2_content = dbc.CardBody([
-        html.H3("Quantity Sold", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
-        html.H1(f"{quantity_selected:,.0f}", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
-        html.Small(format_mom_change(quantity_mom_change), className="card-text text-muted", style={"font-size": "14px"})
-    ])
+        html.Label("Quantity Sold", className="card-title", style={"fontsize":"20px"}),
+        html.H4(f"{quantity_selected:,.0f}", className="card-text"),
+        html.Small(format_cagr_change(quantity_cagr), className="card-text text-muted")
+    ], style={"margin": "1px", "padding": "1px"})
 
     metric_3_content = dbc.CardBody([
-        html.H3("Completed Orders", className="card-title", style={"font-size": "18px", "color": "#2c3e50"}),
-        html.H1(f"{completion_rate_selected:.2f}%", className="card-text", style={"font-size": "30px", "font-weight": "bold", "color": "#000"}),
-        html.Small(format_mom_change(completion_rate_mom_change), className="card-text text-muted", style={"font-size": "14px"})
-    ])
+        html.Label("Completed Orders", className="card-title", style={"fontsize":"20px"}),
+        html.H4(f"{completion_rate_selected:.2f}%", className="card-text"),
+        html.Small(format_cagr_change(completion_rate_cagr), className="card-text text-muted")
+    ], style={"margin": "1px", "padding": "1px"})
 
     return metric_1_content, metric_2_content, metric_3_content
+
 
 @cache.memoize()
 @callback(
@@ -253,6 +283,39 @@ def create_map(query, click_data):
     query_parts = [part for part in query_parts if not part.startswith('(state ==')]
     modified_query = ' & '.join(query_parts)
     state_sales = df.query(modified_query).groupby('state')['Amount'].sum().reset_index()
+    
+    if state_sales.empty:
+        fig = go.Figure()
+        fig.add_annotation(
+            text="No sales data available for the selected state.",
+            x=0.5, y=0.5,
+            xref="paper", yref="paper",
+            showarrow=False,
+            font=dict(size=16)
+        )
+        fig.update_layout(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            template="plotly_white"
+        )
+        
+        # Also return an empty state summary figure
+        state_summary = go.Figure()
+        state_summary.add_annotation(
+            text="No state-wise sales data available.",
+            x=0.5, y=0.5,
+            xref="paper", yref="paper",
+            showarrow=False,
+            font=dict(size=16)
+        )
+        state_summary.update_layout(
+            xaxis=dict(visible=False),
+            yaxis=dict(visible=False),
+            template="plotly_white"
+        )
+        
+        return fig, state_summary
+
 
     # Populate states with no data with 0
     all_states = pd.DataFrame({'state': states})
@@ -337,6 +400,7 @@ def create_map(query, click_data):
     # Replace apply with vectorized operation
     pre_select['State'] = pre_select['State'].map(lambda x: x if x in ordered_states else 'Others')      
     summary_selection = pre_select.groupby('State')['Amount'].sum().reset_index()
+    
 
     # add 'Others' if in index
     if ('Others' in summary_selection['State'].values):
@@ -391,6 +455,21 @@ def create_sales_chart(query):
     try:
         # Apply the filter condition to the DataFrame
         selection = df.query(query)
+        if selection.empty:
+            fig = go.Figure()
+            fig.add_annotation(
+                text="No sales data available for the selected filters.",
+                x=0.5, y=0.5,
+                xref="paper", yref="paper",
+                showarrow=False,
+                font=dict(size=16)
+            )
+            fig.update_layout(
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                template="plotly_white"
+            )
+            return fig
 
         # Determine if the filter is weekly or monthly based on the query content
         # If 'year_week' is in the query, assume weekly; otherwise, assume monthly
@@ -451,6 +530,21 @@ def create_product_chart(query):
     """
     try:
         pre_select = df.query(query).groupby('Category')['Amount'].sum().reset_index()
+        if pre_select.empty:
+            fig = go.Figure()
+            fig.add_annotation(
+                text="No product sales data available.",
+                x=0.5, y=0.5,
+                xref="paper", yref="paper",
+                showarrow=False,
+                font=dict(size=16)
+            )
+            fig.update_layout(
+                xaxis=dict(visible=False),
+                yaxis=dict(visible=False),
+                template="plotly_white"
+            )
+            return fig
 
         # get the top 5, merge the rest to 'others'
         ordered_categories = pre_select.nlargest(5, ['Amount'], 'first')['Category'].tolist()  
@@ -507,7 +601,7 @@ def toggle_time_selection_visibility(time_granularity):
         return (
             {'display': 'block'},  # Show monthly slider
             {'display': 'none'},   # Hide weekly dropdown
-            {'display': 'block', 'color': '#34495e', 'font-weight': 'bold'},  # Show month label
+            {'display': 'block', 'color': 'white', 'font-weight': 'bold'},  # Show month label
             {'display': 'none'}    # Hide week label
         )
     else:  # Weekly
@@ -515,7 +609,7 @@ def toggle_time_selection_visibility(time_granularity):
             {'display': 'none'},   # Hide monthly slider
             {'display': 'block'},  # Show weekly dropdown
             {'display': 'none'},   # Hide month label
-            {'display': 'block', 'color': '#34495e', 'font-weight': 'bold'}  # Show week label
+            {'display': 'block', 'color': 'white', 'font-weight': 'bold'}  # Show week label
         )
 
 @callback(
