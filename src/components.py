@@ -269,14 +269,14 @@ def create_filters(month_labels, week_labels, status_mapping):
     return dbc.Col([
         dbc.Card(
             dbc.CardBody([
-                html.H4("Filters", className="text-center mb-4", style={"font-weight": "bold", "color": "#2c3e50"}),
+                html.H4("", className="text-center mb-4", style={"font-weight": "bold", "color": "#2c3e50"}),
                 
                 html.Label("Time Granularity:", className="fw-bold mt-3", style={"color": "#34495e"}),
                 time_radio,
                 html.Hr(),
-                html.Label("Select Month:", className="fw-bold", style={"color": "#34495e"}, id='month-label'),
+                html.Label("Select Monthly Range:", className="fw-bold", style={"color": "#34495e"}, id='month-label'),
                 html.Div(id='date-slider-container', children=date_slider),  # Wrap slider in a Div for styling
-                html.Label("Select Week:", className="fw-bold", style={"color": "#34495e"}, id='week-label'),
+                html.Label("Select Weekly Range:", className="fw-bold", style={"color": "#34495e"}, id='week-label'),
                 html.Div(id='week-selector-container', children=week_selector, style={'display': 'none'}),  # Initially hidden
                 html.Hr(),
 
