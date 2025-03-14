@@ -127,23 +127,24 @@ def create_footer():
 
 def create_date_slider(month_labels):
     """
-    Create the date slider component for the dashboard.
-    
+    Create the date slider component for selecting a range of months.
+
     Args:
         month_labels (dict): Mapping of month labels for the date slider.
-    
+
     Returns:
-        dcc.Slider: Date slider component.
+        dcc.RangeSlider: Range slider component.
     """
-    return dcc.Slider(
+    return dcc.RangeSlider(
         id="date-slider",
         min=0,
         max=len(month_labels) - 1,
-        value=len(month_labels) - 1,  # Default: latest month
+        value=[0, len(month_labels) - 1],  # Default: full range selection
         marks={i: label for i, label in month_labels.items()},
-        step=None,
+        step=1,
         tooltip={"placement": "bottom", "always_visible": True},
     )
+
 
 def create_week_selector(week_labels):
     """
