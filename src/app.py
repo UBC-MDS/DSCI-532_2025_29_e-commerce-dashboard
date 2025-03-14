@@ -1,7 +1,7 @@
 import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc
 from .data import import_data, import_geojson, preprocess_data
-from .components import create_title, create_footer, create_filters, create_metrics, create_visuals
+from .components import create_footer, create_filters, create_metrics, create_visuals
 from flask_caching import Cache
 
 # Initialize the app
@@ -22,7 +22,6 @@ month_labels = preprocessed_data["month_labels"]
 week_labels = preprocessed_data["week_labels"]
 
 # Create Components
-title = create_title()
 metrics = create_metrics()
 filters = create_filters(month_labels, week_labels, status_mapping)
 visuals = create_visuals()
@@ -32,13 +31,8 @@ footer = create_footer()
 app.layout = dbc.Container([
     dcc.Store(id="filter_condition", data={}),
     dbc.Row([
-        dbc.Col(title, width=12)], className="mb-3"),
-    dbc.Row([
         dbc.Col(filters, width=3),
-        dbc.Col([metrics,
-                 html.Hr(),
-                 visuals], 
-                 width=9)],align="start", className="mb-4"), 
+        dbc.Col([metrics, html.Br(), visuals], width=9, style={"margin-top": "10px"})],align="start", className="mb-4"), 
     footer], 
     fluid=True)
 

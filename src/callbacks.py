@@ -237,22 +237,22 @@ def update_metrics(date_slider_value, week_range_value, promo_filter, fulfillmen
 
     # Wrap metrics inside dbc.CardBody()
     metric_1_content = dbc.CardBody([
-        html.H3("Revenue", className="card-title"),
-        html.H1(format_indian_rupees(revenue_selected), className="card-text"),
+        html.Label("Revenue", className="card-title", style={"fontsize":"20px"}),
+        html.H4(format_indian_rupees(revenue_selected), className="card-text"),
         html.Small(format_cagr_change(revenue_cagr), className="card-text text-muted")
-    ])
+    ], style={"margin": "1px", "padding": "1px"})
 
     metric_2_content = dbc.CardBody([
-        html.H3("Quantity Sold", className="card-title"),
-        html.H1(f"{quantity_selected:,.0f}", className="card-text"),
+        html.Label("Quantity Sold", className="card-title", style={"fontsize":"20px"}),
+        html.H4(f"{quantity_selected:,.0f}", className="card-text"),
         html.Small(format_cagr_change(quantity_cagr), className="card-text text-muted")
-    ])
+    ], style={"margin": "1px", "padding": "1px"})
 
     metric_3_content = dbc.CardBody([
-        html.H3("Completed Orders", className="card-title"),
-        html.H1(f"{completion_rate_selected:.2f}%", className="card-text"),
+        html.Label("Completed Orders", className="card-title", style={"fontsize":"20px"}),
+        html.H4(f"{completion_rate_selected:.2f}%", className="card-text"),
         html.Small(format_cagr_change(completion_rate_cagr), className="card-text text-muted")
-    ])
+    ], style={"margin": "1px", "padding": "1px"})
 
     return metric_1_content, metric_2_content, metric_3_content
 
@@ -601,7 +601,7 @@ def toggle_time_selection_visibility(time_granularity):
         return (
             {'display': 'block'},  # Show monthly slider
             {'display': 'none'},   # Hide weekly dropdown
-            {'display': 'block', 'color': '#34495e', 'font-weight': 'bold'},  # Show month label
+            {'display': 'block', 'color': 'white', 'font-weight': 'bold'},  # Show month label
             {'display': 'none'}    # Hide week label
         )
     else:  # Weekly
@@ -609,7 +609,7 @@ def toggle_time_selection_visibility(time_granularity):
             {'display': 'none'},   # Hide monthly slider
             {'display': 'block'},  # Show weekly dropdown
             {'display': 'none'},   # Hide month label
-            {'display': 'block', 'color': '#34495e', 'font-weight': 'bold'}  # Show week label
+            {'display': 'block', 'color': 'white', 'font-weight': 'bold'}  # Show week label
         )
 
 @callback(
