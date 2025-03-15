@@ -4,27 +4,41 @@ window.dccFunctions = window.dccFunctions || {};
 window.dccFunctions.getWeekStartDate = function(value) {
     // Get the week_labels from the hidden Div
     const weekLabelsElement = document.getElementById("week-labels-data");
-    if (!weekLabelsElement) return value; // Fallback if data isn't found
+    if (!weekLabelsElement) return value; // Fallback
     
     const weekLabelsStr = weekLabelsElement.textContent;
     let weekLabels;
     try {
-        weekLabels = JSON.parse(weekLabelsStr.replace(/'/g, '"')); // Convert single quotes to double for valid JSON
+        weekLabels = JSON.parse(weekLabelsStr.replace(/'/g, '"')); 
     } catch (e) {
         return value; // Fallback
     }
     
-    // Extract the start date (before the "/") for the given value
+    //get the start date 
     const weekRange = weekLabels[Math.round(value)]; 
     if (!weekRange) return value; 
     
-    // Get the start date from the range
+    //start date in the range
     const startDate = weekRange.split('/')[0]; // e.g., "2022-03-28"
     
-    // Extract just the month and day (MM-DD) from the date
+    // extract the year, month, and day from the date
     const dateParts = startDate.split('-');
     if (dateParts.length !== 3) return value; 
     
-    // Return as MM-DD format
-    return dateParts[1] + '-' + dateParts[2]; // Returns e.g., "03-28"
+    const year = dateParts[0];  // e.g., "2022"
+    const month = parseInt(dateParts[1], 10); // e.g., 3 (converted from "03")
+    const day = dateParts[2];   // e.g., "28"
+    
+    //month abbreviations
+    const monthNames = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ];
+    
+    //get the month abbreviation (subtract 1 because months are 0-indexed in JS Date)
+    const monthAbbr = monthNames[month - 1];
+    if (!monthAbbr) return value; // Fallback if invalid
+    
+    //return the formatted date
+    return monthAbbr + ' ' + parseInt(day, 10); // Remove leading zero from day
 };
