@@ -6,6 +6,8 @@ import dash_bootstrap_components as dbc
 from dash import Input, Output, callback
 from .app import df, month_labels, week_labels, status_mapping, india, cache
 from .components import format_large_num, format_indian_rupees
+import warnings
+warnings.simplefilter(action='ignore', category=UserWarning)
 
 @callback(
     Output("filtered-data", "children"),  # Debugging output

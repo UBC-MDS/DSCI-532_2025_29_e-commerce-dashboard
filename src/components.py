@@ -2,6 +2,7 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc
 from git import Repo
 from datetime import datetime
+import json
 
 # Function to format numeric values
 def format_large_num(value):
@@ -151,15 +152,39 @@ def create_week_selector(week_labels):
         dcc.RangeSlider: Range slider component for week selection.
     """
     max_index = max(week_labels.keys())  # Get the maximum index for the slider range
-    return dcc.RangeSlider(
+    custom_marks = {i: {"label": "", "style": {"display": "none"}} for i in range(max_index + 1)} # Hide all marks
+
+    slider = dcc.RangeSlider(
         id="week-range-slider",
         min=0,
         max=max_index,
-        marks={i: {"label": str(i), "style": {"color": "white"}} for i in week_labels.keys()},
+        marks=custom_marks,
         step=1,
         value=[3, 9],  # Default range
-        tooltip={"placement": "bottom", "always_visible": True}
+        tooltip={"placement": "bottom", 
+                 "always_visible": True, 
+                 "transform": "getWeekStartDate"}
     )
+    # Store the week labels in a hidden div so that we can access them in our js file
+    hidden_data = html.Div(
+        id="week-labels-data",
+        style={"display": "none"},
+        children=[json.dumps(week_labels)]
+    )
+
+    info_text = html.Label(
+        "Showing weeks from 2022",
+        style={
+            "fontSize": "12px",  
+            "color": "white",    
+            "textAlign": "left",  
+            "marginTop": "5px",   
+            "fontStyle": "italic"
+        }
+    )
+    
+    # Return everything in a container
+    return html.Div([slider, hidden_data, info_text])
 
 def create_promotion_toggle():
     """
