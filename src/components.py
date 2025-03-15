@@ -2,6 +2,7 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc
 from git import Repo
 from datetime import datetime
+import json
 
 # Function to format numeric values
 def format_large_num(value):
