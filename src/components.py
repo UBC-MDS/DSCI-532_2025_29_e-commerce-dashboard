@@ -151,11 +151,13 @@ def create_week_selector(week_labels):
         dcc.RangeSlider: Range slider component for week selection.
     """
     max_index = max(week_labels.keys())  # Get the maximum index for the slider range
-    return dcc.RangeSlider(
+    custom_marks = {i: {"label": "", "style": {"display": "none"}} for i in range(max_index + 1)} # Hide all marks
+
+    slider = dcc.RangeSlider(
         id="week-range-slider",
         min=0,
         max=max_index,
-        marks={i: {"label": str(i), "style": {"color": "white"}} for i in week_labels.keys()},
+        marks=custom_marks,
         step=1,
         value=[3, 9],  # Default range
         tooltip={"placement": "bottom", "always_visible": True}
