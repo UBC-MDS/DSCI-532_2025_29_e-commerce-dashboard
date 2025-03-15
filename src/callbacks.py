@@ -341,7 +341,7 @@ def create_map(query, click_data):
     # Custom hover template
     fig.update_traces(
         hovertemplate="%{hovertext}",
-        hovertext=state_sales['State'] + '<br>Amount: ₹' + state_sales['Amount'].apply(lambda x: f'{x/1e6:.1f}M' if x >= 1e6 else f'{x/1e3:.1f}K' if x >= 1e3 else f'{x:.0f}'),
+        hovertext=state_sales.apply(lambda row: f"{row['State']}<br>Amount: {format_indian_rupees(round(row['Amount']))}", axis=1),
     )
 
     # Highlight the selected state
@@ -359,6 +359,9 @@ def create_map(query, click_data):
     fig.update_layout(
         modebar=dict(remove=['select', 'lasso2d']),
         margin={"r":0,"t":20,"l":0,"b":0},
+        dragmode=False,
+        clickmode='event',
+        hoverdistance=5,
         coloraxis_colorbar=dict(
             x=-0.1,
             y=0.5,
