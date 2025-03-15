@@ -164,6 +164,26 @@ def create_week_selector(week_labels):
                  "always_visible": True, 
                  "transform": "getWeekStartDate"}
     )
+    # Store the week labels in a hidden div so that we can access them in our js file
+    hidden_data = html.Div(
+        id="week-labels-data",
+        style={"display": "none"},
+        children=[json.dumps(week_labels)]
+    )
+
+    info_text = html.Label(
+        "Showing weeks from 2022",
+        style={
+            "fontSize": "12px",  
+            "color": "white",    
+            "textAlign": "left",  
+            "marginTop": "5px",   
+            "fontStyle": "italic"
+        }
+    )
+    
+    # Return everything in a container
+    return html.Div([slider, hidden_data, info_text])
 
 def create_promotion_toggle():
     """
