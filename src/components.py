@@ -160,7 +160,9 @@ def create_week_selector(week_labels):
         marks=custom_marks,
         step=1,
         value=[3, 9],  # Default range
-        tooltip={"placement": "bottom", "always_visible": True}
+        tooltip={"placement": "bottom", 
+                 "always_visible": True, 
+                 "transform": "getWeekStartDate"}
     )
 
 def create_promotion_toggle():
