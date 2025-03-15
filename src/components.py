@@ -323,10 +323,17 @@ def create_metrics():
 def create_map_graph():
     return dbc.Card([
         dbc.CardHeader('Map of India'),
-        dbc.CardBody(dcc.Graph(id='map', figure={}, 
-                              style={'cursor': 'pointer'},
-                              config={'displayModeBar': True}))
-        ], style={"margin-top": "5px"})
+        dbc.CardBody([
+            html.Div(
+                dcc.Graph(
+                    id='map',
+                    figure={},
+                    config={'displayModeBar': True}
+                ),
+                style={'cursor': 'pointer'}
+            )
+        ])
+    ], style={"margin-top": "5px"})
 
 def create_state_summary_graph():
     return dbc.Card([

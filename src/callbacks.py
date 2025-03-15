@@ -359,6 +359,9 @@ def create_map(query, click_data):
     fig.update_layout(
         modebar=dict(remove=['select', 'lasso2d']),
         margin={"r":0,"t":20,"l":0,"b":0},
+        dragmode=False,
+        clickmode='event',
+        hoverdistance=5,
         coloraxis_colorbar=dict(
             x=-0.1,
             y=0.5,
