@@ -5,7 +5,7 @@
 ![Initial Sketch](../img/sketch.png)
 
 ## Valuable Insights for Dashboard Development ##
-- We particulary found the official documentation of [Dash Core Components](https://dash.plotly.com/dash-core-components) by plotly.
+- We particulary found the official documentation of [Dash Core Components](https://dash.plotly.com/dash-core-components) by plotly helpful.
 - One piece of peer feedback was especially helpful in [highlighting the need to address data quality issues](https://github.com/UBC-MDS/DSCI-532_2025_29_e-commerce-dashboard/issues/88) and handle scenarios where no data was available.
 - Knowing that our instructor, [Joel, was reviewing our work](https://github.com/UBC-MDS/DSCI-532_2025_29_e-commerce-dashboard/issues/16) pushed us to showcase our best efforts. For future cohorts, this approach could be a great motivator for teams to challenge themselves and strive for excellence.
 
