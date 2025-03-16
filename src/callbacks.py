@@ -384,23 +384,14 @@ def create_map(query, click_data):
     # a. <7 selected (select top 7 - selected)
     # b. >7 selected ( empty top 7, select top 7 from selected states)
     MAX_TOP_STATES = 7
-    if (len(selected_state_names)<MAX_TOP_STATES):
-        topn = MAX_TOP_STATES - len(selected_state_names)
-        ordered_states = pre_select.nlargest(topn, ['Amount'], 'first')['State'].tolist() 
-        # ensure selected states are shown, but only if not already included
-        missing_selected = set(selected_state_names).difference(set(ordered_states))
-        if len(missing_selected) > 0:
-            ordered_states += list(selected_state_names)
-    else:
-        topn = MAX_TOP_STATES
-        # select top MAX_TOP_STATES from among the selected states
-        ordered_states = (
-            pre_select[pre_select['State'].isin(selected_state_names)].nlargest(
-                topn, ['Amount'], 'first'
-                )['State'].tolist() 
-        )
-    #print('Selected:',  selected_state_names) 
-    #print('Top:',  ordered_states) 
+    ordered_states = pre_select.nlargest(MAX_TOP_STATES, ['Amount'], 'first')['State'].tolist() 
+    # ensure selected states are shown, but only if not already included
+    missing_selected = set(selected_state_names).difference(set(ordered_states))
+    if len(missing_selected) > 0:
+        # sacrifice the last states
+        del ordered_states[-len(missing_selected):]
+        # add the selected ones in their place
+        ordered_states += list(missing_selected)
 
     # Replace apply with vectorized operation
     pre_select['State'] = pre_select['State'].map(lambda x: x if x in ordered_states else 'Others')      
@@ -418,16 +409,17 @@ def create_map(query, click_data):
     
     # summarized bar chart
     summary_bar = px.bar(summary_selection, x = 'Amount', 
-                         y = 'State', color = 'Amount', 
+                         y = 'State',  
                          orientation='h',
                          hover_data={'Sales Amount': True, 
                                      'Amount': False,
                                      'Percentage': ':.1%'}, 
                          #color_continuous_scale=px.colors.sequential.Bluyl                        
                          )
-    # TODO: manually adjust the color for "Others", if present
-    summary_bar.update_layout(coloraxis = shared_color_axis)
 
+    #set color to first color in the map color scale
+    summary_bar.update_traces(marker_color=px.colors.sequential.Bluyl[-1]) 
+    #                          marker_line_color='rgb(8,48,107)', marker_line_width=1.5, opacity=0.6)
     # y-axis since state names are specified
     summary_bar.update_layout(xaxis_title = 'Sales Amount', 
                             yaxis_title = None)
@@ -565,11 +557,12 @@ def create_product_chart(query):
         selection['Percentage'] = (selection['Amount'] / total_amount) * 100
 
         product = px.bar(selection, x = 'Amount', 
-                         y = 'Category', color = 'Category', 
+                         y = 'Category', 
                          orientation='h',
                          hover_data=['Amount', 'Percentage'],
                          #height = 'auto'
                          )
+        product.update_traces(marker_color=px.colors.sequential.Bluyl[-1]) 
         # hide legend and y-axis since Category names are specified
         product.update_layout(showlegend = False)
         product.update_layout(xaxis_title = 'Sales Amount', 

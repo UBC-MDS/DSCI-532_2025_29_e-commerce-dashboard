@@ -24,6 +24,8 @@ df['year_week'] = df["Date"].dt.to_period("W").astype(str) # the week from date
 df.rename(columns={'ship-state': 'state'}, inplace=True)
 df['state'] = df['state'].str.title()
 df['state'].dropna(inplace=True)
+# pre-process Category
+df['Category'] = df['Category'].str.title()
 
 # Mapping to rename/clean state names in sales data
 state_mapping = {
@@ -49,4 +51,4 @@ summarized_df = df[df['Date']>='2022-04-01'].groupby(['year_month', 'year_week',
 summarized_df.rename(columns={'Order ID': 'order_count'}, inplace=True)
 
 # save to parquet file
-summarized_df.to_parquet('data/amazon_in_sales.parquet', index=False)
+summarized_df.to_parquet('data/processed/amazon_in_sales.parquet', index=False)
