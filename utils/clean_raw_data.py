@@ -49,4 +49,4 @@ summarized_df = df[df['Date']>='2022-04-01'].groupby(['year_month', 'year_week',
 summarized_df.rename(columns={'Order ID': 'order_count'}, inplace=True)
 
 # save to parquet file
-summarized_df.to_parquet('data/amazon_in_sales.parquet', index=False)
+summarized_df.to_parquet('data/processed/amazon_in_sales.parquet', index=False)
