@@ -24,6 +24,8 @@ df['year_week'] = df["Date"].dt.to_period("W").astype(str) # the week from date
 df.rename(columns={'ship-state': 'state'}, inplace=True)
 df['state'] = df['state'].str.title()
 df['state'].dropna(inplace=True)
+# pre-process Category
+df['Category'] = df['Category'].str.title()
 
 # Mapping to rename/clean state names in sales data
 state_mapping = {
