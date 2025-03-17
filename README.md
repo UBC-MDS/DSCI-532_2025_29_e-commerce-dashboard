@@ -99,6 +99,8 @@ Navigate to `http://127.0.0.1:8050/`  (or the specified port) in your browser to
 ## Contributing
 We’d love for you to contribute to this project! Whether it’s adding new features, improving visualizations, or fixing bugs, your input is valuable. Check out our [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to get started.
 
+If you are new to open source, make sure to check out issues labeled "good first issue" - these are great entry points to get started!
+
 ## Support
 Encountered a problem or have a question? Please open an [issue](https://github.com/UBC-MDS/DSCI-532_2025_29_e-commerce-dashboard/issues) on this repository, and we’ll get back to you as soon as possible.
 
